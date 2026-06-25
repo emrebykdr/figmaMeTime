@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
-import 'package:figmaap/pages/onboarding_choose_type_eyebrown.dart';
-import 'package:figmaap/pages/onboarding_choose_type_massage.dart';
-import 'package:figmaap/pages/onboarding_choose_type_hair.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/login_sheet.dart';
@@ -89,18 +86,7 @@ class OnboardingChooseService extends StatelessWidget {
   }
 
   Widget _getTargetPage(String label) {
-    switch (label) {
-      case 'Nail':
-        return const OnboardingChooseTypeNail();
-      case 'Eyebrowns':
-        return const OnboardingChooseTypeEyebrown();
-      case 'Massage':
-        return const OnboardingChooseTypeMassage();
-      case 'Hair':
-        return const OnboardingChooseTypeHair();
-      default:
-        return const OnboardingChooseTypeNail();
-    }
+    return const OnboardingChooseTypeNail();
   }
 
   Widget _buildServiceCard(
