@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/service_card.dart';
+import 'package:figmaap/pages/onboarding_choose_proffesionel.dart';
 
 class OnboardingChooseTypeHair extends StatelessWidget {
   const OnboardingChooseTypeHair({super.key});
@@ -40,7 +41,14 @@ class OnboardingChooseTypeHair extends StatelessWidget {
                     imagePath: services[index]['image']!,
                     title: services[index]['title']!,
                     price: services[index]['price']!,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OnboardingChooseProfessional(),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -80,7 +88,7 @@ class OnboardingChooseTypeHair extends StatelessWidget {
       child: Text(
         'Now, choose one\nthat fit your needs:',
         textAlign: TextAlign.center,
-        style: GoogleFonts.raleway(
+        style: TextStyle(fontFamily: 'Raleway',
           fontWeight: FontWeight.w600,
           fontSize: r.sp(24),
           height: 1.36,

@@ -3,18 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 
-class ServiceCard extends StatelessWidget {
+class ProfessionalCard extends StatelessWidget {
   final String imagePath;
-  final String title;
-  final String price;
+  final String name;
+  final String role;
+  final double rating;
   final bool isSelected;
   final VoidCallback? onTap;
 
-  const ServiceCard({
+  const ProfessionalCard({
     super.key,
     required this.imagePath,
-    required this.title,
-    required this.price,
+    required this.name,
+    required this.role,
+    required this.rating,
     this.isSelected = false,
     this.onTap,
   });
@@ -27,14 +29,16 @@ class ServiceCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: r.w(16),
+          horizontal: r.w(30),
           vertical: r.h(12),
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withValues(alpha: 0.15) : Colors.transparent,
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.25)
+              : AppColors.white,
           border: Border(
             bottom: BorderSide(
-              color: const Color(0xFFE0E0E0),
+              color: const Color(0x267A7A7A),
               width: 1,
             ),
           ),
@@ -42,11 +46,11 @@ class ServiceCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(r.r(8)),
+              borderRadius: BorderRadius.circular(r.r(12)),
               child: Image.asset(
                 imagePath,
-                width: r.w(72),
-                height: r.w(72),
+                width: r.w(83),
+                height: r.w(83),
                 fit: BoxFit.cover,
               ),
             ),
@@ -56,7 +60,7 @@ class ServiceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    name,
                     style: TextStyle(fontFamily: 'Raleway',
                       fontWeight: FontWeight.w600,
                       fontSize: r.sp(16),
@@ -65,10 +69,10 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    price,
+                    role,
                     style: TextStyle(fontFamily: 'Raleway',
                       fontWeight: FontWeight.w500,
-                      fontSize: r.sp(16),
+                      fontSize: r.sp(14),
                       height: 1.5,
                       color: AppColors.tertiary,
                     ),
@@ -76,10 +80,24 @@ class ServiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward,
-              size: r.w(14),
-              color: AppColors.almostBlack,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.star,
+                  size: r.w(18),
+                  color: const Color(0xFFFFD700),
+                ),
+                SizedBox(width: r.w(4)),
+                Text(
+                  rating.toString(),
+                  style: TextStyle(fontFamily: 'Raleway',
+                    fontWeight: FontWeight.w600,
+                    fontSize: r.sp(14),
+                    color: AppColors.almostBlack,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

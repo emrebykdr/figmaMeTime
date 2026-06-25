@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 
@@ -12,7 +12,7 @@ class AppHeader extends StatelessWidget {
 
     return Text(
       'MeTime',
-      style: GoogleFonts.raleway(
+      style: TextStyle(fontFamily: 'Raleway',
         fontWeight: FontWeight.w700,
         fontSize: r.sp(19),
         height: 1.0,

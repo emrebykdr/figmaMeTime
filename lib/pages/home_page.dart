@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/onboarding_choose_service.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/app_primary_button.dart';
 import 'package:figmaap/widgets/app_text_button.dart';
+import 'package:figmaap/widgets/login_sheet.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -71,7 +72,7 @@ class HomePage extends StatelessWidget {
       child: Text(
         'Welcome to \nThe Gallery Salon!',
         textAlign: TextAlign.center,
-        style: GoogleFonts.raleway(
+        style: TextStyle(fontFamily: 'Raleway',
           fontWeight: FontWeight.w700,
           fontSize: r.sp(32),
           height: 1.0,
@@ -88,7 +89,7 @@ class HomePage extends StatelessWidget {
       child: Text(
         'Follow the steps to schedule your\nnext appointment with us.',
         textAlign: TextAlign.center,
-        style: GoogleFonts.raleway(
+        style: TextStyle(fontFamily: 'Raleway',
           fontWeight: FontWeight.w500,
           fontSize: r.sp(18),
           height: 1.25,
@@ -105,7 +106,7 @@ class HomePage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          AppTextButton(text: 'Skip', onPressed: () {}),
+          AppTextButton(text: 'Skip', onPressed: () => LoginSheet.show(context)),
           AppPrimaryButton(
             text: 'Start',
             onPressed: () {

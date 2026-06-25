@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 
@@ -32,7 +32,7 @@ class AppPrimaryButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: GoogleFonts.raleway(
+          style: TextStyle(fontFamily: 'Raleway',
             fontWeight: FontWeight.w600,
             fontSize: r.sp(16),
             color: AppColors.white,

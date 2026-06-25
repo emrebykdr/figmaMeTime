@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
@@ -8,6 +8,7 @@ import 'package:figmaap/pages/onboarding_choose_type_massage.dart';
 import 'package:figmaap/pages/onboarding_choose_type_hair.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
+import 'package:figmaap/widgets/login_sheet.dart';
 
 class OnboardingChooseService extends StatelessWidget {
   const OnboardingChooseService({super.key});
@@ -30,7 +31,7 @@ class OnboardingChooseService extends StatelessWidget {
             SizedBox(height: r.h(40)),
             _buildServiceGrid(r),
             const Spacer(),
-            _buildSkipButton(r),
+            _buildSkipButton(context, r),
             SizedBox(height: r.h(40)),
           ],
         ),
@@ -44,7 +45,7 @@ class OnboardingChooseService extends StatelessWidget {
       child: Text(
         'Please, choose a service:',
         textAlign: TextAlign.center,
-        style: GoogleFonts.raleway(
+        style: TextStyle(fontFamily: 'Raleway',
           fontWeight: FontWeight.w600,
           fontSize: r.sp(24),
           height: 1.36,
@@ -131,7 +132,7 @@ class OnboardingChooseService extends StatelessWidget {
           SizedBox(height: r.h(8)),
           Text(
             label,
-            style: GoogleFonts.raleway(
+            style: TextStyle(fontFamily: 'Raleway',
               fontWeight: FontWeight.w500,
               fontSize: r.sp(18),
               height: 1.0,
@@ -144,12 +145,12 @@ class OnboardingChooseService extends StatelessWidget {
     );
   }
 
-  Widget _buildSkipButton(Responsive r) {
+  Widget _buildSkipButton(BuildContext context, Responsive r) {
     return SizedBox(
       width: r.w(271),
       height: r.h(54),
       child: TextButton(
-        onPressed: () {},
+        onPressed: () => LoginSheet.show(context),
         style: TextButton.styleFrom(
           padding: EdgeInsets.all(r.w(10)),
           shape: RoundedRectangleBorder(
@@ -158,7 +159,7 @@ class OnboardingChooseService extends StatelessWidget {
         ),
         child: Text(
           'Skip',
-          style: GoogleFonts.raleway(
+          style: TextStyle(fontFamily: 'Raleway',
             fontWeight: FontWeight.w700,
             fontSize: r.sp(16),
             height: 1.0,
