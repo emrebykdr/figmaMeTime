@@ -6,7 +6,7 @@ import 'package:figmaap/pages/onboarding_choose_service.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/app_primary_button.dart';
 import 'package:figmaap/widgets/app_text_button.dart';
-import 'package:figmaap/widgets/login_sheet.dart';
+import 'package:figmaap/widgets/page_sheet.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

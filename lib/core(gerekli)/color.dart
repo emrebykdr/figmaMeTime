@@ -10,4 +10,5 @@ class AppColors {
   static const Color dark = Color(0xFF1C1C28);
   static const Color cardBackground = Color(0xFFC4C4C4);
   static const Color dotInactive = Color(0xFFC4C4C4);
+  static const Color cancel = Color(0xFFFF666A);
 }

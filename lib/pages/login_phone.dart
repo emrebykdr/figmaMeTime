@@ -4,11 +4,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
-import 'package:figmaap/widgets/phone_text_field.dart';
+import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/pages/login_phone_code.dart';
 
 class LoginPhone extends StatefulWidget {
-  const LoginPhone({super.key});
+  final Map<String, dynamic>? professional;
+
+  const LoginPhone({super.key, this.professional});
 
   @override
   State<LoginPhone> createState() => _LoginPhoneState();
@@ -198,7 +200,7 @@ class _LoginPhoneState extends State<LoginPhone> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => LoginPhoneCode(phoneNumber: phone),
+                builder: (_) => LoginPhoneCode(phoneNumber: phone, professional: widget.professional),
               ),
             );
           },

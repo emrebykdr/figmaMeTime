@@ -5,7 +5,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
-import 'package:figmaap/widgets/login_sheet.dart';
+import 'package:figmaap/widgets/page_sheet.dart';
 
 class OnboardingChooseService extends StatelessWidget {
   const OnboardingChooseService({super.key});

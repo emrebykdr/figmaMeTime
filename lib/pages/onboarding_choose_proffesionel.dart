@@ -3,10 +3,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
+import 'package:figmaap/pages/no_preference.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/professional_card.dart';
-import 'package:figmaap/widgets/login_sheet.dart';
+import 'package:figmaap/widgets/page_sheet.dart';
 
 class OnboardingChooseProfessional extends StatefulWidget {
   const OnboardingChooseProfessional({super.key});
@@ -72,7 +73,7 @@ class _OnboardingChooseProfessionalState
                       setState(() {
                         _selectedIndex = index;
                       });
-                      LoginSheet.show(context);
+                      LoginSheet.show(context, professional: pro);
                     },
                   );
                 },
@@ -128,7 +129,12 @@ class _OnboardingChooseProfessionalState
 
   Widget _buildNoPreference(Responsive r) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NoPreference()),
+        );
+      },
       child: Text(
         "I don't have a preference",
         style: TextStyle(fontFamily: 'Raleway',
