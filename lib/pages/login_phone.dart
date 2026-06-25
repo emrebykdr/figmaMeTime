@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
+import 'package:figmaap/widgets/phone_text_field.dart';
+import 'package:figmaap/pages/login_phone_code.dart';
 
 class LoginPhone extends StatefulWidget {
   const LoginPhone({super.key});
@@ -51,7 +54,7 @@ class _LoginPhoneState extends State<LoginPhone> {
             children: [
               SizedBox(height: r.h(16)),
               _buildTopBar(context, r),
-              SizedBox(height: r.h(55)),
+              SizedBox(height: r.h(74)),
               _buildTitle(r),
               SizedBox(height: r.h(10)),
               _buildSubtitle(r),
@@ -81,10 +84,10 @@ class _LoginPhoneState extends State<LoginPhone> {
             alignment: Alignment.centerLeft,
             child: GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: Icon(
-                Icons.arrow_back,
-                size: r.w(24),
-                color: AppColors.almostBlack,
+              child: SvgPicture.asset(
+                'assets/icons/arrow_back.svg',
+                width: r.w(24),
+                height: r.w(24),
               ),
             ),
           ),
@@ -140,11 +143,6 @@ class _LoginPhoneState extends State<LoginPhone> {
               ),
             ),
             const Spacer(),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: r.w(20),
-              color: AppColors.tertiary,
-            ),
           ],
         ),
       ),
@@ -153,7 +151,7 @@ class _LoginPhoneState extends State<LoginPhone> {
 
   Widget _buildPhoneInput(Responsive r) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: r.h(4)),
+      padding: EdgeInsets.symmetric(vertical: r.h(16)),
       child: Row(
         children: [
           Text(
@@ -172,25 +170,9 @@ class _LoginPhoneState extends State<LoginPhone> {
           ),
           SizedBox(width: r.w(12)),
           Expanded(
-            child: TextField(
+            child: PhoneTextField(
               controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              style: TextStyle(fontFamily: 'Raleway',
-                fontWeight: FontWeight.w500,
-                fontSize: r.sp(16),
-                color: AppColors.almostBlack,
-              ),
-              decoration: InputDecoration(
-                hintText: '00 0 0000 0000',
-                hintStyle: TextStyle(fontFamily: 'Raleway',
-                  fontWeight: FontWeight.w500,
-                  fontSize: r.sp(16),
-                  color: AppColors.tertiary.withValues(alpha: 0.5),
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
-              ),
+              countryCode: _selectedCountry['code']!,
             ),
           ),
         ],
@@ -208,10 +190,18 @@ class _LoginPhoneState extends State<LoginPhone> {
   Widget _buildContinueButton(Responsive r) {
     return Center(
       child: SizedBox(
-        width: r.w(271),
+        width: r.w(293),
         height: r.h(54),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            final phone = '${_selectedCountry['code']} ${_phoneController.text}';
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LoginPhoneCode(phoneNumber: phone),
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             elevation: 0,
@@ -261,6 +251,7 @@ class _LoginPhoneState extends State<LoginPhone> {
               onTap: () {
                 setState(() {
                   _selectedCountry = country;
+                  _phoneController.clear();
                 });
                 Navigator.pop(context);
               },

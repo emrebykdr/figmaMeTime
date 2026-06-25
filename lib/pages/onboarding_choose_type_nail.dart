@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
@@ -70,10 +71,10 @@ class OnboardingChooseTypeNail extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: Icon(
-                Icons.arrow_back,
-                size: r.w(24),
-                color: AppColors.almostBlack,
+              child: SvgPicture.asset(
+                'assets/icons/arrow_back.svg',
+                width: r.w(24),
+                height: r.w(24),
               ),
             ),
           ),

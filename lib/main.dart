@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/home_page.dart';
 
 void main() {
@@ -18,23 +18,15 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFDCCC5)),
       ),
       builder: (context, child) {
-        final isWide =
-            MediaQuery.of(context).size.width > Responsive.maxAppWidth;
-        if (!isWide) return child!;
-
-        return ColoredBox(
-          color: const Color(0xFFE0E0E0),
-          child: Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: SizedBox(
-                width: Responsive.maxAppWidth,
-                height: Responsive.maxAppHeight,
-                child: child,
-              ),
+        if (kIsWeb) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: MediaQuery.of(context).padding.copyWith(top: 41.42),
             ),
-          ),
-        );
+            child: child!,
+          );
+        }
+        return child!;
       },
       home: const HomePage(),
     );

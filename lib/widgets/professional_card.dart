@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
@@ -83,10 +84,10 @@ class ProfessionalCard extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.star,
-                  size: r.w(18),
-                  color: const Color(0xFFFFD700),
+                SvgPicture.asset(
+                  'assets/icons/star.svg',
+                  width: r.w(18),
+                  height: r.w(18),
                 ),
                 SizedBox(width: r.w(4)),
                 Text(

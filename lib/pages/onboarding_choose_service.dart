@@ -70,7 +70,7 @@ class OnboardingChooseService extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: r.w(24),
           mainAxisSpacing: r.h(16),
-          childAspectRatio: 0.78,
+          childAspectRatio: 0.85,
         ),
         itemCount: services.length,
         itemBuilder: (context, index) {
@@ -132,28 +132,19 @@ class OnboardingChooseService extends StatelessWidget {
   }
 
   Widget _buildSkipButton(BuildContext context, Responsive r) {
-    return SizedBox(
-      width: r.w(271),
-      height: r.h(54),
-      child: TextButton(
-        onPressed: () => LoginSheet.show(context),
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.all(r.w(10)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(r.r(10)),
-          ),
-        ),
-        child: Text(
-          'Skip',
-          style: TextStyle(fontFamily: 'Raleway',
-            fontWeight: FontWeight.w700,
-            fontSize: r.sp(16),
-            height: 1.0,
-            letterSpacing: -0.48,
-            decoration: TextDecoration.underline,
-            decorationColor: AppColors.primary,
-            color: AppColors.primary,
-          ),
+    return GestureDetector(
+      onTap: () => LoginSheet.show(context),
+      child: Text(
+        'Skip',
+        style: TextStyle(
+          fontFamily: 'Raleway',
+          fontWeight: FontWeight.w700,
+          fontSize: r.sp(16),
+          height: 1.0,
+          letterSpacing: -0.48,
+          decoration: TextDecoration.underline,
+          decorationColor: AppColors.primary,
+          color: AppColors.primary,
         ),
       ),
     );

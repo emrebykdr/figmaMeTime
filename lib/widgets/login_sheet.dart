@@ -4,25 +4,20 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/login_phone.dart';
 
+
 class LoginSheet extends StatelessWidget {
   const LoginSheet({super.key});
 
   static void show(BuildContext context) {
-    final r = Responsive(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       barrierColor: Colors.black.withValues(alpha: 0.3),
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(r.r(24))),
-          ),
-          child: const LoginSheet(),
-        );
-      },
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => const LoginSheet(),
     );
   }
 
@@ -58,7 +53,7 @@ class LoginSheet extends StatelessWidget {
           ),
           SizedBox(height: r.h(37)),
           SizedBox(
-            width: r.w(271),
+            width: r.w(293),
             height: r.h(61),
             child: ElevatedButton(
               onPressed: () {

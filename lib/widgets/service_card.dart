@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
@@ -42,7 +43,7 @@ class ServiceCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(r.r(8)),
+              borderRadius: BorderRadius.circular(r.r(5)),
               child: Image.asset(
                 imagePath,
                 width: r.w(72),
@@ -76,10 +77,10 @@ class ServiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward,
-              size: r.w(14),
-              color: AppColors.almostBlack,
+            SvgPicture.asset(
+              'assets/icons/arrow_forward.svg',
+              width: r.w(24),
+              height: r.w(24),
             ),
           ],
         ),
