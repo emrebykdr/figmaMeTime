@@ -6,7 +6,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
-import 'package:figmaap/widgets/professional_card.dart';
+import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 
 class OnboardingChooseProfessional extends StatefulWidget {

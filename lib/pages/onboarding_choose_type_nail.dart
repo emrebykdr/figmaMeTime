@@ -5,7 +5,7 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
-import 'package:figmaap/widgets/service_card.dart';
+import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/pages/onboarding_choose_proffesionel.dart';
 
 class OnboardingChooseTypeNail extends StatelessWidget {

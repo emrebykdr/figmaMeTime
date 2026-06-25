@@ -4,8 +4,7 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/onboarding_choose_service.dart';
 import 'package:figmaap/widgets/app_header.dart';
-import 'package:figmaap/widgets/app_primary_button.dart';
-import 'package:figmaap/widgets/app_text_button.dart';
+import 'package:figmaap/widgets/app_button.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 
 class HomePage extends StatelessWidget {
