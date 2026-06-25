@@ -83,7 +83,7 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
             name: pro?['name'] as String? ?? 'Anna Smith',
             role: pro?['role'] as String? ?? 'Nail Designer',
             rating: pro?['rating'] as double? ?? 5.0,
-            imagePath: pro?['image'] as String? ?? 'assets/prof_1.jpg',
+            imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
           ),
         ),
       );

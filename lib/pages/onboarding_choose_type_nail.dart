@@ -16,11 +16,11 @@ class OnboardingChooseTypeNail extends StatelessWidget {
     final r = Responsive(context);
 
     final services = [
-      {'image': 'assets/c_1.jpg', 'title': 'Basic Manicure', 'price': '\$30'},
-      {'image': 'assets/c_2.jpg', 'title': 'Basic Pedicure', 'price': '\$35'},
-      {'image': 'assets/c_3.jpg', 'title': 'Gel Manicure', 'price': '\$50'},
-      {'image': 'assets/c_4.jpg', 'title': 'Gel Pedicure', 'price': '\$55'},
-      {'image': 'assets/c_5.jpg', 'title': 'Acrylic Extensions', 'price': '\$100'},
+      {'image': 'assets/images/c_1.jpg', 'title': 'Basic Manicure', 'price': '\$30'},
+      {'image': 'assets/images/c_2.jpg', 'title': 'Basic Pedicure', 'price': '\$35'},
+      {'image': 'assets/images/c_3.jpg', 'title': 'Gel Manicure', 'price': '\$50'},
+      {'image': 'assets/images/c_4.jpg', 'title': 'Gel Pedicure', 'price': '\$55'},
+      {'image': 'assets/images/c_5.jpg', 'title': 'Acrylic Extensions', 'price': '\$100'},
     ];
 
     return Scaffold(

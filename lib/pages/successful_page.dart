@@ -46,7 +46,7 @@ class SuccessfulPage extends StatelessWidget {
   Widget _buildHeartIcon(Responsive r) {
     return ClipOval(
       child: Image.asset(
-        'assets/s_kalp.png',
+        'assets/images/s_kalp.png',
         width: r.w(120),
         height: r.w(120),
         fit: BoxFit.cover,

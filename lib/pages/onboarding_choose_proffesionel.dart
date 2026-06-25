@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
-import 'package:figmaap/pages/no_preference.dart';
+import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/professional_card.dart';
@@ -23,19 +23,19 @@ class _OnboardingChooseProfessionalState
 
   final professionals = [
     {
-      'image': 'assets/prof_1.jpg',
+      'image': 'assets/images/prof_1.jpg',
       'name': 'Anna Smith',
       'role': 'Nail designer',
       'rating': 5.0,
     },
     {
-      'image': 'assets/prof_2.jpg',
+      'image': 'assets/images/prof_2.jpg',
       'name': 'Jordan Mcmiller',
       'role': 'Nail designer',
       'rating': 4.9,
     },
     {
-      'image': 'assets/prof_3.jpg',
+      'image': 'assets/images/prof_3.jpg',
       'name': 'Paty Sinclair',
       'role': 'Nail designer',
       'rating': 4.9,
@@ -116,7 +116,8 @@ class _OnboardingChooseProfessionalState
       child: Text(
         'Choose a professional e\nsee the slots available',
         textAlign: TextAlign.center,
-        style: TextStyle(fontFamily: 'Raleway',
+        style: TextStyle(
+          fontFamily: 'Raleway',
           fontWeight: FontWeight.w600,
           fontSize: r.sp(24),
           height: 1.36,
@@ -137,7 +138,8 @@ class _OnboardingChooseProfessionalState
       },
       child: Text(
         "I don't have a preference",
-        style: TextStyle(fontFamily: 'Raleway',
+        style: TextStyle(
+          fontFamily: 'Raleway',
           fontWeight: FontWeight.w700,
           fontSize: r.sp(18),
           height: 1.0,

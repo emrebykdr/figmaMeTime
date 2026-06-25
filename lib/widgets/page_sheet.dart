@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/login_phone.dart';
@@ -119,91 +118,92 @@ class LoginSheet extends StatelessWidget {
 
 class CancelSheet {
   static Future<bool?> show(BuildContext context) {
-    return showModalBottomSheet<bool>(
+    final r = Responsive(context);
+    return showDialog<bool>(
       context: context,
-      isScrollControlled: true,
       barrierColor: Colors.black.withValues(alpha: 0.3),
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (_) {
-        final r = Responsive(context);
-        return Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.w(30), vertical: r.h(32)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                'assets/icons/cancel.svg',
-                width: r.w(66),
-                height: r.w(66),
-              ),
-              SizedBox(height: r.h(24)),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Raleway',
-                    fontWeight: FontWeight.w600,
-                    fontSize: r.sp(20),
-                    height: 1.4,
-                    color: AppColors.almostBlack,
-                  ),
-                  children: const [
-                    TextSpan(text: 'Are you sure, you want to\n'),
-                    TextSpan(
-                      text: 'cancel',
-                      style: TextStyle(color: AppColors.cancel),
-                    ),
-                    TextSpan(text: ' this appointment?'),
-                  ],
+        return Center(
+          child: Container(
+            width: r.w(310),
+            padding: EdgeInsets.symmetric(horizontal: r.w(24), vertical: r.h(32)),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(r.r(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/icons/cancel.png',
+                  width: r.w(66),
+                  height: r.w(66),
                 ),
-              ),
-              SizedBox(height: r.h(32)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context, false),
-                    child: Text(
-                      'No',
-                      style: TextStyle(
-                        fontFamily: 'Raleway',
-                        fontWeight: FontWeight.w600,
-                        fontSize: r.sp(16),
-                        color: AppColors.tertiary,
-                      ),
+                SizedBox(height: r.h(24)),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontFamily: 'Raleway',
+                      fontWeight: FontWeight.w600,
+                      fontSize: r.sp(20),
+                      height: 1.4,
+                      color: AppColors.almostBlack,
                     ),
-                  ),
-                  SizedBox(width: r.w(32)),
-                  SizedBox(
-                    width: r.w(140),
-                    height: r.h(48),
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cancel,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(r.r(10)),
-                        ),
+                    children: const [
+                      TextSpan(text: 'Are you sure, you want to\n'),
+                      TextSpan(
+                        text: 'cancel',
+                        style: TextStyle(color: AppColors.cancel),
                       ),
+                      TextSpan(text: ' this appointment?'),
+                    ],
+                  ),
+                ),
+                SizedBox(height: r.h(32)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context, false),
                       child: Text(
-                        'Cancel',
+                        'No',
                         style: TextStyle(
                           fontFamily: 'Raleway',
                           fontWeight: FontWeight.w600,
                           fontSize: r.sp(16),
-                          color: AppColors.white,
+                          color: AppColors.tertiary,
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: r.h(16)),
-            ],
+                    SizedBox(width: r.w(32)),
+                    SizedBox(
+                      width: r.w(140),
+                      height: r.h(48),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.cancel,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(r.r(10)),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontFamily: 'Raleway',
+                            fontWeight: FontWeight.w600,
+                            fontSize: r.sp(16),
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

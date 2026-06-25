@@ -51,12 +51,12 @@ class HomePage extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Positioned.fill(
-            child: Image.asset('assets/h_frame.png', fit: BoxFit.fitWidth),
+            child: Image.asset('assets/images/h_frame.png', fit: BoxFit.fitWidth),
           ),
           Positioned(
             bottom: 0,
             child: Image.asset(
-              'assets/h_image.png',
+              'assets/images/h_image.png',
               height: r.h(280),
               fit: BoxFit.contain,
             ),

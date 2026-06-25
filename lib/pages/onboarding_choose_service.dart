@@ -55,10 +55,10 @@ class OnboardingChooseService extends StatelessWidget {
 
   Widget _buildServiceGrid(Responsive r) {
     final services = [
-      {'image': 'assets/choose_nail.jpg', 'label': 'Nail'},
-      {'image': 'assets/choose_eyebrown.jpg', 'label': 'Eyebrowns'},
-      {'image': 'assets/choose_massage.jpg', 'label': 'Massage'},
-      {'image': 'assets/choose_hair.jpg', 'label': 'Hair'},
+      {'image': 'assets/images/choose_nail.jpg', 'label': 'Nail'},
+      {'image': 'assets/images/choose_eyebrown.jpg', 'label': 'Eyebrowns'},
+      {'image': 'assets/images/choose_massage.jpg', 'label': 'Massage'},
+      {'image': 'assets/images/choose_hair.jpg', 'label': 'Hair'},
     ];
 
     return Padding(
