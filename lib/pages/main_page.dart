@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
@@ -82,7 +83,7 @@ class _MainPageState extends State<MainPage> {
       padding: EdgeInsets.symmetric(horizontal: r.w(30)),
       child: Row(
         children: [
-          Icon(Icons.menu, size: r.w(25), color: AppColors.almostBlack),
+          SvgPicture.asset('assets/icons/menu.svg', width: r.w(25), height: r.w(25)),
           SizedBox(width: r.w(7)),
           RichText(
             text: TextSpan(
@@ -435,7 +436,7 @@ class _MainPageState extends State<MainPage> {
                   SizedBox(height: r.h(4)),
                   Row(
                     children: [
-                      Icon(Icons.access_time, size: r.w(14), color: AppColors.tertiary),
+                      SvgPicture.asset('assets/icons/clock.svg', width: r.w(14), height: r.w(14)),
                       SizedBox(width: r.w(4)),
                       Text(
                         service['duration']!,

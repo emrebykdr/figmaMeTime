@@ -122,9 +122,9 @@ class SalonPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildActionItemImage(r, 'assets/icons/phone.png', 'Call'),
-          _buildActionItem(r, Icons.chat_bubble_outline, 'Message'),
-          _buildActionItem(r, Icons.person_outline, 'Directions'),
-          _buildActionItem(r, Icons.ios_share, 'Share'),
+          _buildActionItemImage(r, 'assets/icons/message.png', 'Message'),
+          _buildActionItemImage(r, 'assets/icons/directions.png', 'Directions'),
+          _buildActionItemImage(r, 'assets/icons/share.png', 'Share'),
         ],
       ),
     );
@@ -143,32 +143,6 @@ class SalonPage extends StatelessWidget {
           child: Center(
             child: Image.asset(imagePath, width: r.w(28), height: r.w(28)),
           ),
-        ),
-        SizedBox(height: r.h(8)),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Raleway',
-            fontWeight: FontWeight.w500,
-            fontSize: r.sp(12),
-            color: AppColors.almostBlack,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionItem(Responsive r, IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          width: r.w(56),
-          height: r.w(56),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF6F6F6),
-            borderRadius: BorderRadius.circular(r.r(12)),
-          ),
-          child: Icon(icon, size: r.w(28), color: AppColors.almostBlack),
         ),
         SizedBox(height: r.h(8)),
         Text(
@@ -300,18 +274,18 @@ class SalonPage extends StatelessWidget {
           width: r.w(120),
           child: Row(
             children: List.generate(5, (index) {
-              IconData icon;
+              String svgPath;
               if (index < starRating.floor()) {
-                icon = Icons.star;
+                svgPath = 'assets/icons/star_filled.svg';
               } else if (index < starRating) {
-                icon = Icons.star_half;
+                svgPath = 'assets/icons/star_half.svg';
               } else {
-                icon = Icons.star_border;
+                svgPath = 'assets/icons/star_empty.svg';
               }
-              return Icon(
-                icon,
-                size: r.w(20),
-                color: const Color(0xFFFFB800),
+              return SvgPicture.asset(
+                svgPath,
+                width: r.w(20),
+                height: r.w(20),
               );
             }),
           ),

@@ -163,7 +163,7 @@ class _NoPreferenceState extends State<NoPreference> {
             ),
           ),
           SizedBox(width: r.w(4)),
-          Icon(Icons.chevron_right, size: r.w(18), color: AppColors.almostBlack),
+          SvgPicture.asset('assets/icons/chevron_right.svg', width: r.w(18), height: r.w(18)),
         ],
       ),
     );

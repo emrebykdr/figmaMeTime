@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 
@@ -117,9 +118,10 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       obscureText: _obscured,
       onChanged: widget.onChanged,
       suffixIcon: IconButton(
-        icon: Icon(
-          _obscured ? Icons.visibility_off : Icons.visibility,
-          color: AppColors.tertiary,
+        icon: SvgPicture.asset(
+          _obscured ? 'assets/icons/visibility_off.svg' : 'assets/icons/visibility_on.svg',
+          width: 22,
+          height: 22,
         ),
         onPressed: () {
           setState(() {
@@ -228,7 +230,7 @@ class _SignUpPhoneFieldState extends State<SignUpPhoneField> {
                         ),
                       ),
                       SizedBox(width: r.w(4)),
-                      Icon(Icons.keyboard_arrow_down, size: r.w(16), color: AppColors.tertiary),
+                      SvgPicture.asset('assets/icons/arrow_down.svg', width: r.w(16), height: r.w(16)),
                     ],
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/login_phone.dart';
@@ -261,7 +262,7 @@ class DayPickerSheet {
                             else { viewMonth--; }
                           });
                         },
-                        child: Icon(Icons.chevron_left, size: r.w(24), color: AppColors.almostBlack),
+                        child: SvgPicture.asset('assets/icons/chevron_left.svg', width: r.w(24), height: r.w(24)),
                       ),
                       Text(
                         '${_monthNames[viewMonth - 1]} $viewYear',
@@ -279,7 +280,7 @@ class DayPickerSheet {
                             else { viewMonth++; }
                           });
                         },
-                        child: Icon(Icons.chevron_right, size: r.w(24), color: AppColors.almostBlack),
+                        child: SvgPicture.asset('assets/icons/chevron_right.svg', width: r.w(24), height: r.w(24)),
                       ),
                     ],
                   ),
