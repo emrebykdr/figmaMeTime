@@ -81,21 +81,24 @@ class _BookingsPageState extends State<BookingsPage> {
           children: [
             SizedBox(height: r.h(16)),
             _buildTopBar(context, r),
-            SizedBox(height: r.h(32)),
+            SizedBox(height: r.h(57)),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: r.w(30)),
               child: Text(
                 'Your Bookings',
                 style: TextStyle(
                   fontFamily: 'Raleway',
-                  fontWeight: FontWeight.w700,
-                  fontSize: r.sp(28),
-                  color: AppColors.almostBlack,
+                  fontWeight: FontWeight.w600,
+                  fontSize: r.sp(24),
+                  height: 1.36,
+                  letterSpacing: -0.48,
+                  color: AppColors.secondary,
                 ),
               ),
             ),
-            SizedBox(height: r.h(24)),
+            SizedBox(height: r.h(34)),
             _buildTabs(r),
+            const Divider(height: 1, color: Color(0xFFE0E0E0)),
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: r.w(30)),
@@ -142,12 +145,34 @@ class _BookingsPageState extends State<BookingsPage> {
   Widget _buildTabs(Responsive r) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: r.w(30)),
-      child: Row(
-        children: [
-          _buildTab(r, 'Past', 0),
-          SizedBox(width: r.w(24)),
-          _buildTab(r, 'Upcoming', 1),
-        ],
+      child: SizedBox(
+        width: r.w(314),
+        height: r.h(48),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                _buildTab(r, 'Past', 0),
+                _buildTab(r, 'Upcoming', 1),
+              ],
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                Container(
+                  width: r.w(157),
+                  height: 2,
+                  color: _selectedTab == 0 ? AppColors.primary : Colors.transparent,
+                ),
+                Container(
+                  width: r.w(157),
+                  height: 2,
+                  color: _selectedTab == 1 ? AppColors.primary : Colors.transparent,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -156,24 +181,22 @@ class _BookingsPageState extends State<BookingsPage> {
     final isActive = _selectedTab == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = index),
-      child: Column(
-        children: [
-          Text(
+      child: SizedBox(
+        width: r.w(157),
+        height: r.h(24),
+        child: Center(
+          child: Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w600,
               fontSize: r.sp(16),
-              color: isActive ? AppColors.primary : AppColors.tertiary,
+              height: 1.5,
+              color: isActive ? AppColors.primary : AppColors.secondary,
             ),
           ),
-          SizedBox(height: r.h(8)),
-          Container(
-            height: 2,
-            width: r.w(80),
-            color: isActive ? AppColors.primary : Colors.transparent,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -195,7 +218,8 @@ class _BookingsPageState extends State<BookingsPage> {
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w700,
               fontSize: r.sp(16),
-              color: AppColors.almostBlack,
+              height: 1.4,
+              color: AppColors.secondary,
             ),
           ),
           SizedBox(height: r.h(4)),
@@ -204,7 +228,9 @@ class _BookingsPageState extends State<BookingsPage> {
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w500,
-              fontSize: r.sp(14),
+              fontSize: r.sp(16),
+              height: 1.0,
+              letterSpacing: 0.1,
               color: AppColors.tertiary,
             ),
           ),
@@ -214,7 +240,9 @@ class _BookingsPageState extends State<BookingsPage> {
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w500,
-              fontSize: r.sp(14),
+              fontSize: r.sp(16),
+              height: 1.0,
+              letterSpacing: 0.1,
               color: AppColors.tertiary,
             ),
           ),
@@ -223,9 +251,11 @@ class _BookingsPageState extends State<BookingsPage> {
             '${booking['date']} • ${booking['price']}',
             style: TextStyle(
               fontFamily: 'Raleway',
-              fontWeight: FontWeight.w500,
-              fontSize: r.sp(14),
-              color: AppColors.tertiary,
+              fontWeight: FontWeight.w600,
+              fontSize: r.sp(16),
+              height: 1.0,
+              letterSpacing: 0.15,
+              color: AppColors.secondary,
             ),
           ),
           if (showCancel) ...[
@@ -245,7 +275,7 @@ class _BookingsPageState extends State<BookingsPage> {
                   fontFamily: 'Raleway',
                   fontWeight: FontWeight.w600,
                   fontSize: r.sp(14),
-                  color: AppColors.cancel,
+                  color: AppColors.cancelText,
                 ),
               ),
             ),

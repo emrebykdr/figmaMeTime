@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/home_page.dart';
 
 void main() {
@@ -18,15 +19,16 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFDCCC5)),
       ),
       builder: (context, child) {
+        Widget result = child!;
         if (kIsWeb) {
-          return MediaQuery(
+          result = MediaQuery(
             data: MediaQuery.of(context).copyWith(
               padding: MediaQuery.of(context).padding.copyWith(top: 41.42),
             ),
-            child: child!,
+            child: result,
           );
         }
-        return child!;
+        return ResponsiveLayout(child: result);
       },
       home: const HomePage(),
     );

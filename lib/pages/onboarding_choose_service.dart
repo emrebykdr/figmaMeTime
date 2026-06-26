@@ -67,7 +67,7 @@ class OnboardingChooseService extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          crossAxisCount: r.gridColumns(mobile: 2, tablet: 3, desktop: 4),
           crossAxisSpacing: r.w(24),
           mainAxisSpacing: r.h(16),
           childAspectRatio: 0.85,

@@ -3,7 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
-import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/app_card.dart';
@@ -131,10 +130,7 @@ class _OnboardingChooseProfessionalState
   Widget _buildNoPreference(Responsive r) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const NoPreference()),
-        );
+        LoginSheet.show(context, noPreference: true);
       },
       child: Text(
         "I don't have a preference",

@@ -9,8 +9,9 @@ import 'package:figmaap/pages/login_phone_code.dart';
 
 class LoginPhone extends StatefulWidget {
   final Map<String, dynamic>? professional;
+  final bool noPreference;
 
-  const LoginPhone({super.key, this.professional});
+  const LoginPhone({super.key, this.professional, this.noPreference = false});
 
   @override
   State<LoginPhone> createState() => _LoginPhoneState();
@@ -30,14 +31,25 @@ class _LoginPhoneState extends State<LoginPhone> {
 
   late Map<String, String> _selectedCountry;
 
+  bool _isPhoneValid = false;
+
   @override
   void initState() {
     super.initState();
     _selectedCountry = _countries[0];
+    _phoneController.addListener(_onPhoneChanged);
+  }
+
+  void _onPhoneChanged() {
+    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    setState(() {
+      _isPhoneValid = digits.length >= 7;
+    });
   }
 
   @override
   void dispose() {
+    _phoneController.removeListener(_onPhoneChanged);
     _phoneController.dispose();
     super.dispose();
   }
@@ -195,17 +207,20 @@ class _LoginPhoneState extends State<LoginPhone> {
         width: r.w(293),
         height: r.h(54),
         child: ElevatedButton(
-          onPressed: () {
-            final phone = '${_selectedCountry['code']} ${_phoneController.text}';
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => LoginPhoneCode(phoneNumber: phone, professional: widget.professional),
-              ),
-            );
-          },
+          onPressed: _isPhoneValid
+              ? () {
+                  final phone = '${_selectedCountry['code']} ${_phoneController.text}';
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LoginPhoneCode(phoneNumber: phone, professional: widget.professional, noPreference: widget.noPreference),
+                    ),
+                  );
+                }
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(r.r(10)),

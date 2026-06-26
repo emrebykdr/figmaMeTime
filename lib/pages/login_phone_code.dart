@@ -6,12 +6,14 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/pages/professionals_calendar.dart';
+import 'package:figmaap/pages/proffessionals_no_preference.dart';
 
 class LoginPhoneCode extends StatefulWidget {
   final String phoneNumber;
   final Map<String, dynamic>? professional;
+  final bool noPreference;
 
-  const LoginPhoneCode({super.key, required this.phoneNumber, this.professional});
+  const LoginPhoneCode({super.key, required this.phoneNumber, this.professional, this.noPreference = false});
 
   @override
   State<LoginPhoneCode> createState() => _LoginPhoneCodeState();
@@ -75,18 +77,25 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   void _checkCode() {
     final code = _controllers.map((c) => c.text).join();
     if (code.length == 5 && code == '12345') {
-      final pro = widget.professional;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ProfessionalsCalendar(
-            name: pro?['name'] as String? ?? 'Anna Smith',
-            role: pro?['role'] as String? ?? 'Nail Designer',
-            rating: pro?['rating'] as double? ?? 5.0,
-            imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
+      if (widget.noPreference) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const NoPreference()),
+        );
+      } else {
+        final pro = widget.professional;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProfessionalsCalendar(
+              name: pro?['name'] as String? ?? 'Anna Smith',
+              role: pro?['role'] as String? ?? 'Nail Designer',
+              rating: pro?['rating'] as double? ?? 5.0,
+              imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 

@@ -22,20 +22,19 @@ class SuccessfulPage extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: r.w(30)),
+          padding: EdgeInsets.symmetric(horizontal: r.w(47)),
           child: Column(
             children: [
-              const Spacer(flex: 2),
+              SizedBox(height: r.h(90)),
               _buildHeartIcon(r),
-              SizedBox(height: r.h(40)),
               _buildTitle(r),
-              SizedBox(height: r.h(40)),
+              SizedBox(height: r.h(73)),
               _buildDetails(r),
-              const Spacer(flex: 3),
+              const Spacer(),
               _buildKeepBookingButton(context, r),
               SizedBox(height: r.h(16)),
               _buildMainPageButton(context, r),
-              SizedBox(height: r.h(30)),
+              SizedBox(height: r.h(40)),
             ],
           ),
         ),
@@ -44,12 +43,18 @@ class SuccessfulPage extends StatelessWidget {
   }
 
   Widget _buildHeartIcon(Responsive r) {
-    return ClipOval(
-      child: Image.asset(
-        'assets/images/s_kalp.png',
-        width: r.w(120),
-        height: r.w(120),
-        fit: BoxFit.cover,
+    return SizedBox(
+      width: r.w(281),
+      height: r.h(252),
+      child: Center(
+        child: ClipOval(
+          child: Image.asset(
+            'assets/images/s_kalp.png',
+            width: r.w(120),
+            height: r.w(120),
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }
@@ -63,6 +68,7 @@ class SuccessfulPage extends StatelessWidget {
           fontWeight: FontWeight.w600,
           fontSize: r.sp(24),
           height: 1.36,
+          letterSpacing: -0.48,
           color: AppColors.almostBlack,
         ),
         children: const [
@@ -77,49 +83,61 @@ class SuccessfulPage extends StatelessWidget {
   }
 
   Widget _buildDetails(Responsive r) {
-    return Column(
-      children: [
-        Text(
-          'Your booking details:',
-          style: TextStyle(
-            fontFamily: 'Raleway',
-            fontWeight: FontWeight.w500,
-            fontSize: r.sp(16),
-            color: AppColors.tertiary,
+    return SizedBox(
+      width: r.w(226),
+      child: Column(
+        children: [
+          Text(
+            'Your booking details:',
+            style: TextStyle(
+              fontFamily: 'Raleway',
+              fontWeight: FontWeight.w500,
+              fontSize: r.sp(18),
+              height: 1.36,
+              letterSpacing: -0.48,
+              color: AppColors.tertiary,
+            ),
           ),
-        ),
-        SizedBox(height: r.h(16)),
-        Text(
-          '$day    $time',
-          style: TextStyle(
-            fontFamily: 'Raleway',
-            fontWeight: FontWeight.w600,
-            fontSize: r.sp(18),
-            color: AppColors.almostBlack,
+          SizedBox(height: r.h(16)),
+          Text(
+            '$day    $time',
+            style: TextStyle(
+              fontFamily: 'Raleway',
+              fontWeight: FontWeight.w500,
+              fontSize: r.sp(18),
+              height: 1.36,
+              letterSpacing: -0.48,
+              color: AppColors.secondary,
+            ),
           ),
-        ),
-        SizedBox(height: r.h(8)),
-        Text(
-          'At The Gallery Salon',
-          style: TextStyle(
-            fontFamily: 'Raleway',
-            fontWeight: FontWeight.w500,
-            fontSize: r.sp(16),
-            color: AppColors.tertiary,
+          SizedBox(height: r.h(16)),
+          Text(
+            'At The Gallery Salon',
+            style: TextStyle(
+              fontFamily: 'Raleway',
+              fontWeight: FontWeight.w500,
+              fontSize: r.sp(18),
+              height: 1.36,
+              letterSpacing: -0.48,
+              color: AppColors.tertiary,
+            ),
           ),
-        ),
-        SizedBox(height: r.h(8)),
-        Text(
-          '8502 Preston Rd. Inglewood',
-          style: TextStyle(
-            fontFamily: 'Raleway',
-            fontWeight: FontWeight.w500,
-            fontSize: r.sp(16),
-            color: AppColors.almostBlack,
-            decoration: TextDecoration.underline,
+          SizedBox(height: r.h(16)),
+          Text(
+            '8502 Preston Rd. Inglewood',
+            style: TextStyle(
+              fontFamily: 'Raleway',
+              fontWeight: FontWeight.w600,
+              fontSize: r.sp(18),
+              height: 1.36,
+              letterSpacing: -0.48,
+              color: AppColors.secondary,
+              decoration: TextDecoration.underline,
+              decorationColor: AppColors.secondary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

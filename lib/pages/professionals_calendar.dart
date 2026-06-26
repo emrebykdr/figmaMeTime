@@ -29,15 +29,29 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
   int _selectedDayIndex = 0;
 
   final _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   final _dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   final _availableTimes = [
-    '10:00 am', '11:00 am', '01:30 pm',
-    '03:00 pm', '07:00 pm', '05:00 pm',
+    '10:00 am',
+    '11:00 am',
+    '01:30 pm',
+    '03:00 pm',
+    '07:00 pm',
+    '05:00 pm',
   ];
 
   List<DateTime> get _days {
@@ -195,7 +209,9 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
               setState(() {
                 _selectedDate = picked;
                 final now = DateTime.now();
-                _selectedDayIndex = picked.difference(DateTime(now.year, now.month, now.day)).inDays;
+                _selectedDayIndex = picked
+                    .difference(DateTime(now.year, now.month, now.day))
+                    .inDays;
               });
             }
           },
@@ -211,7 +227,11 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                 ),
               ),
               SizedBox(width: r.w(4)),
-              Icon(Icons.chevron_right, size: r.w(18), color: AppColors.almostBlack),
+              Icon(
+                Icons.chevron_right,
+                size: r.w(18),
+                color: AppColors.almostBlack,
+              ),
             ],
           ),
         ),
@@ -244,7 +264,9 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(r.r(10)),
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : const Color(0xFFCDCDCD),
+                  color: isSelected
+                      ? AppColors.primary
+                      : const Color(0xFFCDCDCD),
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
@@ -257,7 +279,9 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                       fontFamily: 'Raleway',
                       fontWeight: FontWeight.w600,
                       fontSize: r.sp(18),
-                      color: isSelected ? AppColors.primary : AppColors.almostBlack,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.almostBlack,
                     ),
                   ),
                   Text(
@@ -266,7 +290,9 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                       fontFamily: 'Raleway',
                       fontWeight: FontWeight.w500,
                       fontSize: r.sp(12),
-                      color: isSelected ? AppColors.primary : AppColors.tertiary,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.tertiary,
                     ),
                   ),
                 ],

@@ -47,9 +47,9 @@ class _NoPreferenceState extends State<NoPreference> {
           children: [
             SizedBox(height: r.h(16)),
             _buildTopBar(context, r),
-            SizedBox(height: r.h(32)),
+            SizedBox(height: r.h(58)),
             _buildTitle(r),
-            SizedBox(height: r.h(24)),
+            SizedBox(height: r.h(40)),
             const Divider(height: 1, color: Color(0xFFE0E0E0)),
             Expanded(
               child: SingleChildScrollView(
@@ -57,17 +57,17 @@ class _NoPreferenceState extends State<NoPreference> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: r.h(24)),
+                    SizedBox(height: r.h(40)),
                     _buildMonthHeader(r),
-                    SizedBox(height: r.h(16)),
-                    _buildDayLabel(r),
-                    SizedBox(height: r.h(16)),
-                    _buildDaySelector(r),
                     SizedBox(height: r.h(24)),
-                    _buildAvailabilityLabel(r),
-                    SizedBox(height: r.h(16)),
-                    _buildTimeGrid(r),
+                    _buildDayLabel(r),
+                    SizedBox(height: r.h(24)),
+                    _buildDaySelector(r),
                     SizedBox(height: r.h(32)),
+                    _buildAvailabilityLabel(r),
+                    SizedBox(height: r.h(20)),
+                    _buildTimeGrid(r),
+                    SizedBox(height: r.h(40)),
                   ],
                 ),
               ),

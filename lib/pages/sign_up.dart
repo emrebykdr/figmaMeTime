@@ -28,15 +28,34 @@ class _SignUpState extends State<SignUp> {
   ];
 
   late String _selectedCode;
+  bool _isFormValid = false;
 
   @override
   void initState() {
     super.initState();
     _selectedCode = _countries[0]['code']!;
+    _nameController.addListener(_validateForm);
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+    _phoneController.addListener(_validateForm);
+  }
+
+  void _validateForm() {
+    final phoneDigits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    setState(() {
+      _isFormValid = _nameController.text.trim().isNotEmpty &&
+          _emailController.text.trim().isNotEmpty &&
+          _passwordController.text.isNotEmpty &&
+          phoneDigits.length >= 7;
+    });
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_validateForm);
+    _emailController.removeListener(_validateForm);
+    _passwordController.removeListener(_validateForm);
+    _phoneController.removeListener(_validateForm);
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -135,9 +154,10 @@ class _SignUpState extends State<SignUp> {
         width: r.w(293),
         height: r.h(54),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: _isFormValid ? () {} : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(r.r(10)),
