@@ -133,7 +133,7 @@ class OnboardingChooseService extends StatelessWidget {
 
   Widget _buildSkipButton(BuildContext context, Responsive r) {
     return GestureDetector(
-      onTap: () => LoginSheet.show(context),
+      onTap: () => LoginSheet.show(context, skipToMain: true),
       child: Text(
         'Skip',
         style: TextStyle(

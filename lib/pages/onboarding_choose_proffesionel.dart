@@ -12,8 +12,15 @@ import 'package:figmaap/pages/proffessionals_no_preference.dart';
 
 class OnboardingChooseProfessional extends StatefulWidget {
   final bool isLoggedIn;
+  final String selectedService;
+  final String selectedPrice;
 
-  const OnboardingChooseProfessional({super.key, this.isLoggedIn = false});
+  const OnboardingChooseProfessional({
+    super.key,
+    this.isLoggedIn = false,
+    this.selectedService = 'Basic Manicure',
+    this.selectedPrice = '\$30',
+  });
 
   @override
   State<OnboardingChooseProfessional> createState() =>
@@ -85,11 +92,13 @@ class _OnboardingChooseProfessionalState
                               role: pro['role'] as String,
                               rating: pro['rating'] as double,
                               imagePath: pro['image'] as String,
+                              selectedService: widget.selectedService,
+                              selectedPrice: widget.selectedPrice,
                             ),
                           ),
                         );
                       } else {
-                        LoginSheet.show(context, professional: pro);
+                        LoginSheet.show(context, professional: pro, selectedService: widget.selectedService, selectedPrice: widget.selectedPrice);
                       }
                     },
                   );

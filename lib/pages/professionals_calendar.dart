@@ -4,12 +4,16 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 import 'package:figmaap/pages/successful_page.dart';
+import 'package:figmaap/services/booking_service.dart';
+
 
 class ProfessionalsCalendar extends StatefulWidget {
   final String name;
   final String role;
   final double rating;
   final String imagePath;
+  final String selectedService;
+  final String selectedPrice;
 
   const ProfessionalsCalendar({
     super.key,
@@ -17,6 +21,8 @@ class ProfessionalsCalendar extends StatefulWidget {
     required this.role,
     required this.rating,
     required this.imagePath,
+    this.selectedService = 'Basic Manicure',
+    this.selectedPrice = '\$30',
   });
 
   @override
@@ -362,8 +368,17 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
         height: r.h(54),
         child: ElevatedButton(
           onPressed: _selectedTime != null
-              ? () {
+              ? () async {
                   final dayName = _dayNames[_selectedDate.weekday % 7];
+                  await BookingService().addBooking(
+                    salon: 'The Gallery Salon',
+                    professional: widget.name,
+                    service: widget.selectedService,
+                    date: '$dayName, ${_selectedDate.day}',
+                    time: _selectedTime!,
+                    price: widget.selectedPrice,
+                  );
+                  if (!mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(

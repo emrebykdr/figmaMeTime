@@ -5,6 +5,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 import 'package:figmaap/pages/successful_page.dart';
+import 'package:figmaap/services/booking_service.dart';
 
 class NoPreference extends StatefulWidget {
   const NoPreference({super.key});
@@ -309,8 +310,18 @@ class _NoPreferenceState extends State<NoPreference> {
         height: r.h(54),
         child: ElevatedButton(
           onPressed: _selectedTime != null
-              ? () {
+              ? () async {
                   final dayName = _dayNames[_selectedDate.weekday % 7];
+                  final slot = _availableSlots.firstWhere((s) => s['time'] == _selectedTime);
+                  await BookingService().addBooking(
+                    salon: 'The Gallery Salon',
+                    professional: slot['with']!,
+                    service: 'Basic Manicure',
+                    date: '$dayName, ${_selectedDate.day}',
+                    time: _selectedTime!,
+                    price: '\$30',
+                  );
+                  if (!mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(

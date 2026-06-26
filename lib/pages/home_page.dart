@@ -105,7 +105,7 @@ class HomePage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          AppTextButton(text: 'Skip', onPressed: () => LoginSheet.show(context)),
+          AppTextButton(text: 'Skip', onPressed: () => LoginSheet.show(context, skipToMain: true)),
           AppPrimaryButton(
             text: 'Start',
             onPressed: () {

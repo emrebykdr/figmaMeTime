@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
+import 'package:figmaap/services/booking_service.dart';
 
 class BookingsPage extends StatefulWidget {
   final int initialTab;
@@ -16,52 +18,7 @@ class BookingsPage extends StatefulWidget {
 
 class _BookingsPageState extends State<BookingsPage> {
   late int _selectedTab;
-
-  final _pastBookings = [
-    {
-      'salon': "Luna's Salon",
-      'professional': 'Paty Sinclair',
-      'distance': '5.0 Kms',
-      'services': 'Basic Manicure 1 x',
-      'date': '8 Mar 2022',
-      'price': '\$30',
-    },
-    {
-      'salon': 'The Gallery Salon',
-      'professional': 'Anna Smith',
-      'distance': '5.0 Kms',
-      'services': 'Basic Manicure 1 x + Basic Pedicure 1 x',
-      'date': '12 May 2022',
-      'price': '\$65',
-    },
-    {
-      'salon': 'The Gallery Salon',
-      'professional': 'Anna Smith',
-      'distance': '5.0 Kms',
-      'services': 'Acrylic Extensions 1 x + Gel Manicure 1 x',
-      'date': '8 Sep 2023',
-      'price': '\$150',
-    },
-  ];
-
-  final _upcomingBookings = [
-    {
-      'salon': 'The Gallery Salon',
-      'professional': 'Anna Smith',
-      'distance': '5.0 Kms',
-      'services': 'Acrylic Extensions 1 x + Gel Manicure 1 x',
-      'date': '19 Oct 2023',
-      'price': '\$150',
-    },
-    {
-      'salon': 'The Gallery Salon',
-      'professional': 'Anna Smith',
-      'distance': '5.0 Kms',
-      'services': 'Gel Pedicure 1 x',
-      'date': '31 Oct 2023',
-      'price': '\$55',
-    },
-  ];
+  final _bookingService = BookingService();
 
   @override
   void initState() {
@@ -99,22 +56,51 @@ class _BookingsPageState extends State<BookingsPage> {
             SizedBox(height: r.h(34)),
             _buildTabs(r),
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: r.w(30)),
-                itemCount: _selectedTab == 0
-                    ? _pastBookings.length
-                    : _upcomingBookings.length,
-                itemBuilder: (context, index) {
-                  final booking = _selectedTab == 0
-                      ? _pastBookings[index]
-                      : _upcomingBookings[index];
-                  return _buildBookingCard(r, booking, _selectedTab == 1);
-                },
-              ),
+              child: _buildBookingList(r),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBookingList(Responsive r) {
+    final stream = _selectedTab == 0
+        ? _bookingService.getPastBookings()
+        : _bookingService.getUpcomingBookings();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Text(
+              _selectedTab == 0 ? 'No past bookings' : 'No upcoming bookings',
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w500,
+                fontSize: r.sp(16),
+                color: AppColors.tertiary,
+              ),
+            ),
+          );
+        }
+
+        final docs = snapshot.data!.docs;
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: r.w(30)),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final docId = docs[index].id;
+            return _buildBookingCard(r, data, docId, _selectedTab == 1);
+          },
+        );
+      },
     );
   }
 
@@ -209,7 +195,7 @@ class _BookingsPageState extends State<BookingsPage> {
     );
   }
 
-  Widget _buildBookingCard(Responsive r, Map<String, String> booking, bool showCancel) {
+  Widget _buildBookingCard(Responsive r, Map<String, dynamic> booking, String docId, bool showCancel) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: r.h(16)),
       decoration: const BoxDecoration(
@@ -221,7 +207,7 @@ class _BookingsPageState extends State<BookingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            booking['salon']!,
+            booking['salon'] ?? '',
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w700,
@@ -232,7 +218,7 @@ class _BookingsPageState extends State<BookingsPage> {
           ),
           SizedBox(height: r.h(4)),
           Text(
-            'with ${booking['professional']}  •  ${booking['distance']}',
+            'with ${booking['professional'] ?? ''}',
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w500,
@@ -244,7 +230,7 @@ class _BookingsPageState extends State<BookingsPage> {
           ),
           SizedBox(height: r.h(4)),
           Text(
-            booking['services']!,
+            booking['service'] ?? '',
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w500,
@@ -256,7 +242,7 @@ class _BookingsPageState extends State<BookingsPage> {
           ),
           SizedBox(height: r.h(4)),
           Text(
-            '${booking['date']} • ${booking['price']}',
+            '${booking['date'] ?? ''} • ${booking['time'] ?? ''} • ${booking['price'] ?? ''}',
             style: TextStyle(
               fontFamily: 'Raleway',
               fontWeight: FontWeight.w500,
@@ -272,9 +258,7 @@ class _BookingsPageState extends State<BookingsPage> {
               onTap: () async {
                 final confirmed = await CancelSheet.show(context);
                 if (confirmed == true) {
-                  setState(() {
-                    _upcomingBookings.remove(booking);
-                  });
+                  await _bookingService.cancelBooking(docId);
                 }
               },
               child: Text(

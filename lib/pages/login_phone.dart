@@ -10,8 +10,18 @@ import 'package:figmaap/pages/login_phone_code.dart';
 class LoginPhone extends StatefulWidget {
   final Map<String, dynamic>? professional;
   final bool noPreference;
+  final String selectedService;
+  final String selectedPrice;
+  final bool skipToMain;
 
-  const LoginPhone({super.key, this.professional, this.noPreference = false});
+  const LoginPhone({
+    super.key,
+    this.professional,
+    this.noPreference = false,
+    this.selectedService = 'Basic Manicure',
+    this.selectedPrice = '\$30',
+    this.skipToMain = false,
+  });
 
   @override
   State<LoginPhone> createState() => _LoginPhoneState();
@@ -213,7 +223,14 @@ class _LoginPhoneState extends State<LoginPhone> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => LoginPhoneCode(phoneNumber: phone, professional: widget.professional, noPreference: widget.noPreference),
+                      builder: (_) => LoginPhoneCode(
+                  phoneNumber: phone,
+                  professional: widget.professional,
+                  noPreference: widget.noPreference,
+                  selectedService: widget.selectedService,
+                  selectedPrice: widget.selectedPrice,
+                  isSignUp: widget.skipToMain,
+                ),
                     ),
                   );
                 }

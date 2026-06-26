@@ -49,7 +49,11 @@ class OnboardingChooseTypeNail extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => OnboardingChooseProfessional(isLoggedIn: isLoggedIn),
+                          builder: (_) => OnboardingChooseProfessional(
+                            isLoggedIn: isLoggedIn,
+                            selectedService: services[index]['title']!,
+                            selectedPrice: services[index]['price']!,
+                          ),
                         ),
                       );
                     },

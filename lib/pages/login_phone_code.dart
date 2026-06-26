@@ -14,8 +14,18 @@ class LoginPhoneCode extends StatefulWidget {
   final Map<String, dynamic>? professional;
   final bool noPreference;
   final bool isSignUp;
+  final String selectedService;
+  final String selectedPrice;
 
-  const LoginPhoneCode({super.key, required this.phoneNumber, this.professional, this.noPreference = false, this.isSignUp = false});
+  const LoginPhoneCode({
+    super.key,
+    required this.phoneNumber,
+    this.professional,
+    this.noPreference = false,
+    this.isSignUp = false,
+    this.selectedService = 'Basic Manicure',
+    this.selectedPrice = '\$30',
+  });
 
   @override
   State<LoginPhoneCode> createState() => _LoginPhoneCodeState();
@@ -100,6 +110,8 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
               role: pro?['role'] as String? ?? 'Nail Designer',
               rating: pro?['rating'] as double? ?? 5.0,
               imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
+              selectedService: widget.selectedService,
+              selectedPrice: widget.selectedPrice,
             ),
           ),
         );

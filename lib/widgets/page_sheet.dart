@@ -10,10 +10,20 @@ import 'package:figmaap/pages/sign_up.dart';
 class LoginSheet extends StatelessWidget {
   final Map<String, dynamic>? professional;
   final bool noPreference;
+  final String selectedService;
+  final String selectedPrice;
+  final bool skipToMain;
 
-  const LoginSheet({super.key, this.professional, this.noPreference = false});
+  const LoginSheet({
+    super.key,
+    this.professional,
+    this.noPreference = false,
+    this.selectedService = 'Basic Manicure',
+    this.selectedPrice = '\$30',
+    this.skipToMain = false,
+  });
 
-  static void show(BuildContext context, {Map<String, dynamic>? professional, bool noPreference = false}) {
+  static void show(BuildContext context, {Map<String, dynamic>? professional, bool noPreference = false, String selectedService = 'Basic Manicure', String selectedPrice = '\$30', bool skipToMain = false}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -22,7 +32,7 @@ class LoginSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => LoginSheet(professional: professional, noPreference: noPreference),
+      builder: (_) => LoginSheet(professional: professional, noPreference: noPreference, selectedService: selectedService, selectedPrice: selectedPrice, skipToMain: skipToMain),
     );
   }
 
@@ -67,7 +77,7 @@ class LoginSheet extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => LoginPhone(professional: professional, noPreference: noPreference)),
+                  MaterialPageRoute(builder: (_) => LoginPhone(professional: professional, noPreference: noPreference, selectedService: selectedService, selectedPrice: selectedPrice, skipToMain: skipToMain)),
                 );
               },
               style: ElevatedButton.styleFrom(
