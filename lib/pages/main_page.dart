@@ -4,6 +4,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/pages/bookings_page.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
+import 'package:figmaap/pages/salon_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -163,7 +164,14 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildAdCard(Responsive r, String text, String imagePath) {
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SalonPage()),
+        );
+      },
+      child: Container(
       width: r.w(280),
       height: r.h(140),
       decoration: BoxDecoration(
@@ -191,6 +199,7 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
       ),
+    ),
     );
   }
 
