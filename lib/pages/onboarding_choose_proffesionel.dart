@@ -160,7 +160,10 @@ class _OnboardingChooseProfessionalState
         if (widget.isLoggedIn) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const NoPreference()),
+            MaterialPageRoute(builder: (_) => NoPreference(
+              selectedService: widget.selectedService,
+              selectedPrice: widget.selectedPrice,
+            )),
           );
         } else {
           LoginSheet.show(context, noPreference: true);

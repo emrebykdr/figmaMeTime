@@ -98,7 +98,10 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
       } else if (widget.noPreference) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const NoPreference()),
+          MaterialPageRoute(builder: (_) => NoPreference(
+            selectedService: widget.selectedService,
+            selectedPrice: widget.selectedPrice,
+          )),
         );
       } else {
         final pro = widget.professional;

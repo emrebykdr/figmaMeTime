@@ -8,7 +8,14 @@ import 'package:figmaap/pages/successful_page.dart';
 import 'package:figmaap/services/booking_service.dart';
 
 class NoPreference extends StatefulWidget {
-  const NoPreference({super.key});
+  final String selectedService;
+  final String selectedPrice;
+
+  const NoPreference({
+    super.key,
+    this.selectedService = 'Basic Manicure',
+    this.selectedPrice = '\$30',
+  });
 
   @override
   State<NoPreference> createState() => _NoPreferenceState();
@@ -316,10 +323,10 @@ class _NoPreferenceState extends State<NoPreference> {
                   await BookingService().addBooking(
                     salon: 'The Gallery Salon',
                     professional: slot['with']!,
-                    service: 'Basic Manicure',
+                    service: widget.selectedService,
                     date: '$dayName, ${_selectedDate.day}',
                     time: _selectedTime!,
-                    price: '\$30',
+                    price: widget.selectedPrice,
                   );
                   if (!mounted) return;
                   Navigator.push(
