@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
-import 'package:figmaap/pages/home_page.dart';
+import 'package:figmaap/pages/main_page.dart';
 import 'package:figmaap/pages/bookings_page.dart';
 
 class SuccessfulPage extends StatelessWidget {
@@ -25,16 +25,16 @@ class SuccessfulPage extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: r.w(47)),
           child: Column(
             children: [
-              SizedBox(height: r.h(90)),
+              SizedBox(height: r.h(50)),
               _buildHeartIcon(r),
               _buildTitle(r),
-              SizedBox(height: r.h(73)),
+              SizedBox(height: r.h(50)),
               _buildDetails(r),
               const Spacer(),
               _buildKeepBookingButton(context, r),
               SizedBox(height: r.h(16)),
               _buildMainPageButton(context, r),
-              SizedBox(height: r.h(40)),
+              SizedBox(height: r.h(30)),
             ],
           ),
         ),
@@ -179,7 +179,7 @@ class SuccessfulPage extends StatelessWidget {
       onTap: () {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const MainPage()),
           (route) => false,
         );
       },

@@ -70,7 +70,7 @@ class OnboardingChooseService extends StatelessWidget {
           crossAxisCount: r.gridColumns(mobile: 2, tablet: 3, desktop: 4),
           crossAxisSpacing: r.w(24),
           mainAxisSpacing: r.h(16),
-          childAspectRatio: 0.85,
+          childAspectRatio: 132.27 / 156.16,
         ),
         itemCount: services.length,
         itemBuilder: (context, index) {
@@ -115,7 +115,7 @@ class OnboardingChooseService extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: r.h(8)),
+          SizedBox(height: r.h(10)),
           Text(
             label,
             style: TextStyle(fontFamily: 'Raleway',

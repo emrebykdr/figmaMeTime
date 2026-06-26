@@ -7,13 +7,15 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/pages/professionals_calendar.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
+import 'package:figmaap/pages/main_page.dart';
 
 class LoginPhoneCode extends StatefulWidget {
   final String phoneNumber;
   final Map<String, dynamic>? professional;
   final bool noPreference;
+  final bool isSignUp;
 
-  const LoginPhoneCode({super.key, required this.phoneNumber, this.professional, this.noPreference = false});
+  const LoginPhoneCode({super.key, required this.phoneNumber, this.professional, this.noPreference = false, this.isSignUp = false});
 
   @override
   State<LoginPhoneCode> createState() => _LoginPhoneCodeState();
@@ -77,7 +79,13 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   void _checkCode() {
     final code = _controllers.map((c) => c.text).join();
     if (code.length == 5 && code == '12345') {
-      if (widget.noPreference) {
+      if (widget.isSignUp) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+          (route) => false,
+        );
+      } else if (widget.noPreference) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const NoPreference()),

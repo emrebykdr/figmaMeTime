@@ -98,7 +98,6 @@ class _BookingsPageState extends State<BookingsPage> {
             ),
             SizedBox(height: r.h(34)),
             _buildTabs(r),
-            const Divider(height: 1, color: Color(0xFFE0E0E0)),
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: r.w(30)),
@@ -157,17 +156,26 @@ class _BookingsPageState extends State<BookingsPage> {
               ],
             ),
             const Spacer(),
-            Row(
+            Stack(
               children: [
                 Container(
-                  width: r.w(157),
-                  height: 2,
-                  color: _selectedTab == 0 ? AppColors.primary : Colors.transparent,
+                  width: r.w(314),
+                  height: 1,
+                  color: const Color(0xFFE0E0E0),
                 ),
-                Container(
-                  width: r.w(157),
-                  height: 2,
-                  color: _selectedTab == 1 ? AppColors.primary : Colors.transparent,
+                Row(
+                  children: [
+                    Container(
+                      width: r.w(157),
+                      height: 2,
+                      color: _selectedTab == 0 ? AppColors.primary : Colors.transparent,
+                    ),
+                    Container(
+                      width: r.w(157),
+                      height: 2,
+                      color: _selectedTab == 1 ? AppColors.primary : Colors.transparent,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -251,11 +259,11 @@ class _BookingsPageState extends State<BookingsPage> {
             '${booking['date']} • ${booking['price']}',
             style: TextStyle(
               fontFamily: 'Raleway',
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
               fontSize: r.sp(16),
               height: 1.0,
-              letterSpacing: 0.15,
-              color: AppColors.secondary,
+              letterSpacing: 0.1,
+              color: AppColors.tertiary,
             ),
           ),
           if (showCancel) ...[

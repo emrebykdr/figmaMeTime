@@ -7,9 +7,13 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
+import 'package:figmaap/pages/professionals_calendar.dart';
+import 'package:figmaap/pages/proffessionals_no_preference.dart';
 
 class OnboardingChooseProfessional extends StatefulWidget {
-  const OnboardingChooseProfessional({super.key});
+  final bool isLoggedIn;
+
+  const OnboardingChooseProfessional({super.key, this.isLoggedIn = false});
 
   @override
   State<OnboardingChooseProfessional> createState() =>
@@ -72,7 +76,21 @@ class _OnboardingChooseProfessionalState
                       setState(() {
                         _selectedIndex = index;
                       });
-                      LoginSheet.show(context, professional: pro);
+                      if (widget.isLoggedIn) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProfessionalsCalendar(
+                              name: pro['name'] as String,
+                              role: pro['role'] as String,
+                              rating: pro['rating'] as double,
+                              imagePath: pro['image'] as String,
+                            ),
+                          ),
+                        );
+                      } else {
+                        LoginSheet.show(context, professional: pro);
+                      }
                     },
                   );
                 },
@@ -130,7 +148,14 @@ class _OnboardingChooseProfessionalState
   Widget _buildNoPreference(Responsive r) {
     return GestureDetector(
       onTap: () {
-        LoginSheet.show(context, noPreference: true);
+        if (widget.isLoggedIn) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NoPreference()),
+          );
+        } else {
+          LoginSheet.show(context, noPreference: true);
+        }
       },
       child: Text(
         "I don't have a preference",

@@ -4,6 +4,7 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
+import 'package:figmaap/pages/login_phone_code.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -154,7 +155,20 @@ class _SignUpState extends State<SignUp> {
         width: r.w(293),
         height: r.h(54),
         child: ElevatedButton(
-          onPressed: _isFormValid ? () {} : null,
+          onPressed: _isFormValid
+              ? () {
+                  final phone = '$_selectedCode ${_phoneController.text}';
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LoginPhoneCode(
+                        phoneNumber: phone,
+                        isSignUp: true,
+                      ),
+                    ),
+                  );
+                }
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),

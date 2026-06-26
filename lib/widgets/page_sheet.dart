@@ -125,13 +125,15 @@ class CancelSheet {
       barrierColor: Colors.black.withValues(alpha: 0.3),
       builder: (_) {
         return Center(
-          child: Container(
-            width: r.w(310),
-            padding: EdgeInsets.symmetric(horizontal: r.w(24), vertical: r.h(32)),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(r.r(20)),
-            ),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: r.w(310),
+              padding: EdgeInsets.symmetric(horizontal: r.w(24), vertical: r.h(32)),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(r.r(20)),
+              ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -205,6 +207,7 @@ class CancelSheet {
                 ),
               ],
             ),
+          ),
           ),
         );
       },

@@ -9,7 +9,9 @@ import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/pages/onboarding_choose_proffesionel.dart';
 
 class OnboardingChooseTypeNail extends StatelessWidget {
-  const OnboardingChooseTypeNail({super.key});
+  final bool isLoggedIn;
+
+  const OnboardingChooseTypeNail({super.key, this.isLoggedIn = false});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +49,7 @@ class OnboardingChooseTypeNail extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const OnboardingChooseProfessional(),
+                          builder: (_) => OnboardingChooseProfessional(isLoggedIn: isLoggedIn),
                         ),
                       );
                     },
