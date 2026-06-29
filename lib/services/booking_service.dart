@@ -1,11 +1,11 @@
-// lib/services/booking_service.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:figmaap/services/user_service.dart';
 
 class BookingService {
   final _firestore = FirebaseFirestore.instance;
 
-  // Randevu ekle
+  String? get _currentPhone => UserService.currentPhone;
+
   Future<void> addBooking({
     required String salon,
     required String professional,
@@ -22,27 +22,27 @@ class BookingService {
       'time': time,
       'price': price,
       'status': 'upcoming',
+      'userPhone': _currentPhone ?? '',
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
-  // Upcoming randevuları getir
   Stream<QuerySnapshot> getUpcomingBookings() {
     return _firestore
         .collection('bookings')
         .where('status', isEqualTo: 'upcoming')
+        .where('userPhone', isEqualTo: _currentPhone ?? '')
         .snapshots();
   }
 
-  // Past randevuları getir
   Stream<QuerySnapshot> getPastBookings() {
     return _firestore
         .collection('bookings')
         .where('status', isEqualTo: 'past')
+        .where('userPhone', isEqualTo: _currentPhone ?? '')
         .snapshots();
   }
 
-  // Randevu iptal et
   Future<void> cancelBooking(String bookingId) async {
     await _firestore.collection('bookings').doc(bookingId).delete();
   }
