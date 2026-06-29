@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 enum ScreenType { mobile, tablet, desktop }
@@ -16,10 +17,12 @@ class Responsive {
 
   double get screenWidth => MediaQuery.sizeOf(context).width;
   double get screenHeight => MediaQuery.sizeOf(context).height;
+  bool get isLandscape => screenWidth > screenHeight;
 
   ScreenType get screenType {
-    if (screenWidth < _mobileBreak) return ScreenType.mobile;
-    if (screenWidth < _tabletBreak) return ScreenType.tablet;
+    final shortSide = min(screenWidth, screenHeight);
+    if (shortSide < _mobileBreak) return ScreenType.mobile;
+    if (shortSide < _tabletBreak) return ScreenType.tablet;
     return ScreenType.desktop;
   }
 
@@ -28,29 +31,34 @@ class Responsive {
   bool get isDesktop => screenType == ScreenType.desktop;
 
   double get _effectiveWidth {
-    if (screenWidth > maxContentWidth) return maxContentWidth;
-    return screenWidth.clamp(320.0, maxContentWidth);
+    final width = isLandscape
+        ? min(screenWidth * 0.5, maxContentWidth)
+        : screenWidth;
+    return width.clamp(320.0, maxContentWidth);
   }
 
   double get _effectiveHeight {
-    return screenHeight.clamp(568.0, 932.0);
+    final height = isLandscape ? screenHeight : screenHeight;
+    return height.clamp(480.0, 932.0);
   }
 
   double get _scaleWidth => _effectiveWidth / _designWidth;
   double get _scaleHeight => _effectiveHeight / _designHeight;
+  double get _scale => min(_scaleWidth, _scaleHeight);
 
   double w(double width) => width * _scaleWidth;
   double h(double height) => height * _scaleHeight;
 
   double sp(double fontSize) {
-    final scaled = fontSize * _scaleWidth;
+    final scaled = fontSize * _scale;
     final textScaler = MediaQuery.textScalerOf(context);
     return textScaler.scale(scaled);
   }
 
-  double r(double radius) => radius * _scaleWidth;
+  double r(double radius) => radius * _scale;
 
   int gridColumns({int mobile = 2, int tablet = 3, int desktop = 4}) {
+    if (isLandscape && isMobile) return tablet;
     switch (screenType) {
       case ScreenType.mobile:
         return mobile;
@@ -69,11 +77,20 @@ class ResponsiveLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: Responsive.maxContentWidth),
-        child: child,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape = constraints.maxWidth > constraints.maxHeight;
+        final maxWidth = isLandscape
+            ? min(constraints.maxWidth * 0.5, Responsive.maxContentWidth)
+            : Responsive.maxContentWidth;
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

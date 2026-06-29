@@ -5,6 +5,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/pages/login_phone_code.dart';
+import 'package:figmaap/services/user_service.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -156,8 +157,14 @@ class _SignUpState extends State<SignUp> {
         height: r.h(54),
         child: ElevatedButton(
           onPressed: _isFormValid
-              ? () {
+              ? () async {
                   final phone = '$_selectedCode ${_phoneController.text}';
+                  await UserService().registerUser(
+                    fullName: _nameController.text.trim(),
+                    email: _emailController.text.trim(),
+                    phone: phone,
+                  );
+                  if (!mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(

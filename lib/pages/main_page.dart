@@ -6,6 +6,7 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/pages/bookings_page.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
 import 'package:figmaap/pages/salon_page.dart';
+import 'package:figmaap/services/user_service.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -16,6 +17,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedCategory = 0;
+  String _userName = 'Guest';
   final _categories = ['Recommended', 'Packages', 'Professionals'];
 
   final _services = [
@@ -44,6 +46,27 @@ class _MainPageState extends State<MainPage> {
       'price': '\$25',
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    if (UserService.currentUserName != null && UserService.currentUserName!.isNotEmpty) {
+      setState(() {
+        _userName = UserService.currentUserName!;
+      });
+    } else if (UserService.currentPhone != null) {
+      final user = await UserService().getUserByPhone(UserService.currentPhone!);
+      if (user != null && user['fullName'] != null && (user['fullName'] as String).isNotEmpty) {
+        setState(() {
+          _userName = user['fullName'];
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,11 +118,11 @@ class _MainPageState extends State<MainPage> {
                 letterSpacing: -0.24,
                 color: AppColors.almostBlack,
               ),
-              children: const [
-                TextSpan(text: 'Hello, '),
+              children: [
+                const TextSpan(text: 'Hello, '),
                 TextSpan(
-                  text: 'Carol',
-                  style: TextStyle(
+                  text: _userName,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),

@@ -8,6 +8,7 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/pages/professionals_calendar.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/pages/main_page.dart';
+import 'package:figmaap/services/user_service.dart';
 
 class LoginPhoneCode extends StatefulWidget {
   final String phoneNumber;
@@ -86,9 +87,11 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     _checkCode();
   }
 
-  void _checkCode() {
+  void _checkCode() async {
     final code = _controllers.map((c) => c.text).join();
     if (code.length == 5 && code == '12345') {
+      await UserService().loginUser(phone: widget.phoneNumber);
+      if (!mounted) return;
       if (widget.isSignUp) {
         Navigator.pushAndRemoveUntil(
           context,
