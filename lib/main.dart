@@ -4,17 +4,27 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/home_page.dart';
+import 'package:figmaap/pages/main_page.dart';
+import 'package:figmaap/services/user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+
+  final loggedIn = await UserService.isLoggedIn();
+  if (loggedIn) {
+    await UserService.loadSession();
+  }
+
+  runApp(MyApp(isLoggedIn: loggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +46,7 @@ class MyApp extends StatelessWidget {
         }
         return ResponsiveLayout(child: result);
       },
-      home: const HomePage(),
+      home: isLoggedIn ? const MainPage() : const HomePage(),
     );
   }
 }

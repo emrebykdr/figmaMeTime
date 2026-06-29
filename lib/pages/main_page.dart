@@ -18,6 +18,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedCategory = 0;
   String _userName = 'Guest';
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
   final _categories = ['Recommended', 'Packages', 'Professionals'];
 
   final _services = [
@@ -66,6 +68,19 @@ class _MainPageState extends State<MainPage> {
         });
       }
     }
+  }
+
+  List<Map<String, String>> get _filteredServices {
+    if (_searchQuery.isEmpty) return _services;
+    return _services
+        .where((s) => s['name']!.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -154,16 +169,48 @@ class _MainPageState extends State<MainPage> {
               height: r.w(24),
             ),
             SizedBox(width: r.w(8)),
-            Text(
-              'Search',
-              style: TextStyle(
-                fontFamily: 'Raleway',
-                fontWeight: FontWeight.w500,
-                fontSize: r.sp(14),
-                height: 1.13,
-                color: AppColors.tertiary,
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  fontWeight: FontWeight.w500,
+                  fontSize: r.sp(14),
+                  color: AppColors.almostBlack,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Raleway',
+                    fontWeight: FontWeight.w500,
+                    fontSize: r.sp(14),
+                    color: AppColors.tertiary,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
               ),
             ),
+            if (_searchQuery.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  });
+                },
+                child: Icon(
+                  Icons.close,
+                  size: r.w(18),
+                  color: AppColors.tertiary,
+                ),
+              ),
           ],
         ),
       ),
@@ -402,9 +449,9 @@ class _MainPageState extends State<MainPage> {
             height: r.h(223),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _services.length,
+              itemCount: _filteredServices.length,
               itemBuilder: (context, index) {
-                final service = _services[index];
+                final service = _filteredServices[index];
                 return _buildServiceCard(r, service);
               },
             ),
