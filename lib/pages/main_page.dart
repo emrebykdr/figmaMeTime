@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
+import 'package:figmaap/services/booking_service.dart';
 import 'package:figmaap/pages/bookings_page.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
 import 'package:figmaap/pages/salon_page.dart';
@@ -332,95 +334,125 @@ class _MainPageState extends State<MainPage> {
             ),
           ),
           SizedBox(height: r.h(16)),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BookingsPage(initialTab: 1)),
-              );
-            },
-            child: Container(
-              width: r.w(315),
-              height: r.h(72),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FB),
-                borderRadius: BorderRadius.circular(r.r(10)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: r.w(74),
+          StreamBuilder<QuerySnapshot>(
+            stream: BookingService().getUpcomingBookings(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsPage(initialTab: 1))),
+                  child: Container(
+                    width: r.w(315),
                     height: r.h(72),
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: const Color(0xFFF9F9FB),
                       borderRadius: BorderRadius.circular(r.r(10)),
-                      border: Border.all(color: AppColors.primary, width: 1.5),
                     ),
                     child: Center(
                       child: Text(
-                        '19\nOct',
-                        textAlign: TextAlign.center,
+                        'No upcoming bookings',
                         style: TextStyle(
                           fontFamily: 'Raleway',
-                          fontWeight: FontWeight.w700,
-                          fontSize: r.sp(18),
-                          height: 1.13,
-                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: r.sp(14),
+                          color: AppColors.tertiary,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: r.w(12)),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Basic Pedicure',
-                          style: TextStyle(
-                            fontFamily: 'Raleway',
-                            fontWeight: FontWeight.w700,
-                            fontSize: r.sp(14),
-                            color: AppColors.almostBlack,
-                          ),
-                        ),
-                        Text(
-                          'with Paty',
-                          style: TextStyle(
-                            fontFamily: 'Raleway',
-                            fontWeight: FontWeight.w500,
-                            fontSize: r.sp(12),
-                            color: AppColors.tertiary,
-                          ),
-                        ),
-                        Text(
-                          'Tuesday, 04:30pm',
-                          style: TextStyle(
-                            fontFamily: 'Raleway',
-                            fontWeight: FontWeight.w700,
-                            fontSize: r.sp(14),
-                            color: AppColors.almostBlack,
-                          ),
-                        ),
-                      ],
-                    ),
+                );
+              }
+              final booking = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+              final date = booking['date'] as String? ?? '';
+              final parts = date.split(', ');
+              final dayNum = parts.length > 1 ? parts[1] : '';
+              final dayName = parts.isNotEmpty ? parts[0] : '';
+
+              return GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsPage(initialTab: 1))),
+                child: Container(
+                  width: r.w(315),
+                  height: r.h(72),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9FB),
+                    borderRadius: BorderRadius.circular(r.r(10)),
                   ),
-                  Padding(
-                    padding: EdgeInsets.only(right: r.w(16)),
-                    child: Text(
-                      'Edit',
-                      style: TextStyle(
-                        fontFamily: 'Raleway',
-                        fontWeight: FontWeight.w600,
-                        fontSize: r.sp(14),
-                        color: AppColors.almostBlack,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: r.w(74),
+                        height: r.h(72),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(r.r(10)),
+                          border: Border.all(color: AppColors.primary, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$dayNum\n$dayName',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Raleway',
+                              fontWeight: FontWeight.w700,
+                              fontSize: r.sp(14),
+                              height: 1.13,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(width: r.w(12)),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              booking['service'] as String? ?? '',
+                              style: TextStyle(
+                                fontFamily: 'Raleway',
+                                fontWeight: FontWeight.w700,
+                                fontSize: r.sp(14),
+                                color: AppColors.almostBlack,
+                              ),
+                              ),
+                            Text(
+                              'with ${booking['professional'] as String? ?? ''}',
+                              style: TextStyle(
+                                fontFamily: 'Raleway',
+                                fontWeight: FontWeight.w500,
+                                fontSize: r.sp(12),
+                                color: AppColors.tertiary,
+                              ),
+                            ),
+                            Text(
+                              '$dayName, ${booking['time'] as String? ?? ''}',
+                              style: TextStyle(
+                                fontFamily: 'Raleway',
+                                fontWeight: FontWeight.w700,
+                                fontSize: r.sp(14),
+                                color: AppColors.almostBlack,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(right: r.w(16)),
+                        child: Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontFamily: 'Raleway',
+                            fontWeight: FontWeight.w600,
+                            fontSize: r.sp(14),
+                            color: AppColors.almostBlack,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),
