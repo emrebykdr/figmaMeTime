@@ -6,6 +6,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/pages/login_phone_code.dart';
+import 'package:figmaap/services/user_service.dart';
 
 class LoginPhone extends StatefulWidget {
   final Map<String, dynamic>? professional;
@@ -42,6 +43,7 @@ class _LoginPhoneState extends State<LoginPhone> {
   late Map<String, String> _selectedCountry;
 
   bool _isPhoneValid = false;
+  String? _errorText;
 
   @override
   void initState() {
@@ -54,6 +56,7 @@ class _LoginPhoneState extends State<LoginPhone> {
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
     setState(() {
       _isPhoneValid = digits.length >= 7;
+      _errorText = null;
     });
   }
 
@@ -88,6 +91,18 @@ class _LoginPhoneState extends State<LoginPhone> {
               _buildDivider(),
               _buildPhoneInput(r),
               _buildDivider(),
+              if (_errorText != null) ...[
+                SizedBox(height: r.h(8)),
+                Text(
+                  _errorText!,
+                  style: TextStyle(
+                    fontFamily: 'Raleway',
+                    fontWeight: FontWeight.w500,
+                    fontSize: r.sp(13),
+                    color: AppColors.cancel,
+                  ),
+                ),
+              ],
               const Spacer(),
               _buildContinueButton(r),
               SizedBox(height: r.h(40)),
@@ -218,19 +233,27 @@ class _LoginPhoneState extends State<LoginPhone> {
         height: r.h(54),
         child: ElevatedButton(
           onPressed: _isPhoneValid
-              ? () {
+              ? () async {
                   final phone = '${_selectedCountry['code']} ${_phoneController.text}';
+                  final exists = await UserService().phoneExists(phone);
+                  if (!mounted) return;
+                  if (!exists) {
+                    setState(() {
+                      _errorText = 'No account found with this phone number';
+                    });
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => LoginPhoneCode(
-                  phoneNumber: phone,
-                  professional: widget.professional,
-                  noPreference: widget.noPreference,
-                  selectedService: widget.selectedService,
-                  selectedPrice: widget.selectedPrice,
-                  isSignUp: widget.skipToMain,
-                ),
+                        phoneNumber: phone,
+                        professional: widget.professional,
+                        noPreference: widget.noPreference,
+                        selectedService: widget.selectedService,
+                        selectedPrice: widget.selectedPrice,
+                        isSignUp: widget.skipToMain,
+                      ),
                     ),
                   );
                 }

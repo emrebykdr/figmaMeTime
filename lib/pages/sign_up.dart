@@ -159,12 +159,18 @@ class _SignUpState extends State<SignUp> {
           onPressed: _isFormValid
               ? () async {
                   final phone = '$_selectedCode ${_phoneController.text}';
-                  await UserService().registerUser(
+                  final success = await UserService().registerUser(
                     fullName: _nameController.text.trim(),
                     email: _emailController.text.trim(),
                     phone: phone,
                   );
                   if (!mounted) return;
+                  if (!success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('This phone number is already registered')),
+                    );
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(

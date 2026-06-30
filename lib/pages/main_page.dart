@@ -62,8 +62,8 @@ class _MainPageState extends State<MainPage> {
       setState(() {
         _userName = UserService.currentUserName!;
       });
-    } else if (UserService.currentPhone != null) {
-      final user = await UserService().getUserByPhone(UserService.currentPhone!);
+    } else if (UserService.currentUserId != null) {
+      final user = await UserService().getUserById(UserService.currentUserId!);
       if (user != null && user['fullName'] != null && (user['fullName'] as String).isNotEmpty) {
         setState(() {
           _userName = user['fullName'];

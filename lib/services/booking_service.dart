@@ -4,7 +4,7 @@ import 'package:figmaap/services/user_service.dart';
 class BookingService {
   final _firestore = FirebaseFirestore.instance;
 
-  String? get _currentPhone => UserService.currentPhone;
+  String? get _currentUserId => UserService.currentUserId;
 
   Future<void> addBooking({
     required String salon,
@@ -22,7 +22,7 @@ class BookingService {
       'time': time,
       'price': price,
       'status': 'upcoming',
-      'userPhone': _currentPhone ?? '',
+      'userId': _currentUserId ?? '',
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -31,7 +31,7 @@ class BookingService {
     return _firestore
         .collection('bookings')
         .where('status', isEqualTo: 'upcoming')
-        .where('userPhone', isEqualTo: _currentPhone ?? '')
+        .where('userId', isEqualTo: _currentUserId ?? '')
         .snapshots();
   }
 
@@ -39,7 +39,7 @@ class BookingService {
     return _firestore
         .collection('bookings')
         .where('status', isEqualTo: 'past')
-        .where('userPhone', isEqualTo: _currentPhone ?? '')
+        .where('userId', isEqualTo: _currentUserId ?? '')
         .snapshots();
   }
 
