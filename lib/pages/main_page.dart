@@ -382,9 +382,8 @@ class _MainPageState extends State<MainPage> {
                         width: r.w(74),
                         height: r.h(72),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(r.r(10)),
-                          border: Border.all(color: AppColors.primary, width: 1.5),
                         ),
                         child: Center(
                           child: Text(
@@ -393,9 +392,9 @@ class _MainPageState extends State<MainPage> {
                             style: TextStyle(
                               fontFamily: 'Raleway',
                               fontWeight: FontWeight.w700,
-                              fontSize: r.sp(14),
+                              fontSize: r.sp(18),
                               height: 1.13,
-                              color: AppColors.primary,
+                              color: AppColors.white,
                             ),
                           ),
                         ),
