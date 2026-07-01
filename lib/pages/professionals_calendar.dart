@@ -33,6 +33,7 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
   DateTime _selectedDate = DateTime.now();
   String? _selectedTime;
   int _selectedDayIndex = 0;
+  Set<String> _bookedTimes = {};
 
   final _monthNames = [
     'January',
@@ -63,6 +64,28 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
   List<DateTime> get _days {
     final now = DateTime.now();
     return List.generate(14, (i) => now.add(Duration(days: i)));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookedTimes();
+  }
+
+  Future<void> _loadBookedTimes() async {
+    final dayName = _dayNames[_selectedDate.weekday % 7];
+    final date = '$dayName, ${_selectedDate.day}';
+    final times = await BookingService().getBookedTimes(
+      professional: widget.name,
+      date: date,
+    );
+    if (!mounted) return;
+    setState(() {
+      _bookedTimes = times;
+      if (_selectedTime != null && _bookedTimes.contains(_selectedTime)) {
+        _selectedTime = null;
+      }
+    });
   }
 
   @override
@@ -219,6 +242,7 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                     .difference(DateTime(now.year, now.month, now.day))
                     .inDays;
               });
+              _loadBookedTimes();
             }
           },
           child: Row(
@@ -263,6 +287,7 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                 _selectedDayIndex = index;
                 _selectedDate = day;
               });
+              _loadBookedTimes();
             },
             child: Container(
               width: r.w(56),
@@ -328,16 +353,20 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
       runSpacing: r.h(12),
       children: _availableTimes.map((time) {
         final isSelected = time == _selectedTime;
+        final isBooked = _bookedTimes.contains(time);
         return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedTime = time;
-            });
-          },
+          onTap: isBooked
+              ? null
+              : () {
+                  setState(() {
+                    _selectedTime = time;
+                  });
+                },
           child: Container(
             width: r.w(150),
             padding: EdgeInsets.symmetric(vertical: r.h(14)),
             decoration: BoxDecoration(
+              color: isBooked ? const Color(0xFFF0F0F0) : null,
               borderRadius: BorderRadius.circular(r.r(10)),
               border: Border.all(
                 color: isSelected ? AppColors.primary : const Color(0xFFCDCDCD),
@@ -351,7 +380,9 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                   fontFamily: 'Raleway',
                   fontWeight: FontWeight.w500,
                   fontSize: r.sp(14),
-                  color: isSelected ? AppColors.primary : AppColors.almostBlack,
+                  color: isBooked
+                      ? AppColors.tertiary
+                      : (isSelected ? AppColors.primary : AppColors.almostBlack),
                 ),
               ),
             ),

@@ -25,6 +25,7 @@ class _NoPreferenceState extends State<NoPreference> {
   DateTime _selectedDate = DateTime.now();
   int _selectedDayIndex = 0;
   String? _selectedTime;
+  Map<String, Set<String>> _bookedByProfessional = {};
 
   final _monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -42,6 +43,40 @@ class _NoPreferenceState extends State<NoPreference> {
   List<DateTime> get _days {
     final now = DateTime.now();
     return List.generate(14, (i) => now.add(Duration(days: i)));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookedSlots();
+  }
+
+  Future<void> _loadBookedSlots() async {
+    final dayName = _dayNames[_selectedDate.weekday % 7];
+    final date = '$dayName, ${_selectedDate.day}';
+    final professionals = _availableSlots.map((s) => s['with']!).toSet();
+    final result = <String, Set<String>>{};
+    for (final professional in professionals) {
+      result[professional] = await BookingService().getBookedTimes(
+        professional: professional,
+        date: date,
+      );
+    }
+    if (!mounted) return;
+    setState(() {
+      _bookedByProfessional = result;
+      if (_selectedTime != null) {
+        final slot = _availableSlots.firstWhere(
+          (s) => s['time'] == _selectedTime,
+          orElse: () => {},
+        );
+        final withName = slot['with'];
+        if (withName != null &&
+            (_bookedByProfessional[withName]?.contains(_selectedTime) ?? false)) {
+          _selectedTime = null;
+        }
+      }
+    });
   }
 
   @override
@@ -147,6 +182,7 @@ class _NoPreferenceState extends State<NoPreference> {
             final now = DateTime.now();
             _selectedDayIndex = picked.difference(DateTime(now.year, now.month, now.day)).inDays;
           });
+          _loadBookedSlots();
         }
       },
       child: Row(
@@ -207,6 +243,7 @@ class _NoPreferenceState extends State<NoPreference> {
                 _selectedDayIndex = index;
                 _selectedDate = day;
               });
+              _loadBookedSlots();
             },
             child: Container(
               width: r.w(56),
@@ -268,13 +305,15 @@ class _NoPreferenceState extends State<NoPreference> {
         final time = slot['time']!;
         final withName = slot['with']!;
         final isSelected = time == _selectedTime;
+        final isBooked = _bookedByProfessional[withName]?.contains(time) ?? false;
 
         return GestureDetector(
-          onTap: () => setState(() => _selectedTime = time),
+          onTap: isBooked ? null : () => setState(() => _selectedTime = time),
           child: Container(
             width: r.w(150),
             padding: EdgeInsets.symmetric(vertical: r.h(10)),
             decoration: BoxDecoration(
+              color: isBooked ? const Color(0xFFF0F0F0) : null,
               borderRadius: BorderRadius.circular(r.r(10)),
               border: Border.all(
                 color: isSelected ? AppColors.primary : const Color(0xFFCDCDCD),
@@ -289,7 +328,9 @@ class _NoPreferenceState extends State<NoPreference> {
                     fontFamily: 'Raleway',
                     fontWeight: FontWeight.w500,
                     fontSize: r.sp(14),
-                    color: isSelected ? AppColors.primary : AppColors.almostBlack,
+                    color: isBooked
+                        ? AppColors.tertiary
+                        : (isSelected ? AppColors.primary : AppColors.almostBlack),
                   ),
                 ),
                 SizedBox(height: r.h(2)),
@@ -299,7 +340,7 @@ class _NoPreferenceState extends State<NoPreference> {
                     fontFamily: 'Raleway',
                     fontWeight: FontWeight.w400,
                     fontSize: r.sp(12),
-                    color: isSelected ? AppColors.primary : AppColors.tertiary,
+                    color: isBooked ? AppColors.tertiary : (isSelected ? AppColors.primary : AppColors.tertiary),
                   ),
                 ),
               ],

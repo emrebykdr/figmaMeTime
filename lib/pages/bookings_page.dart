@@ -96,8 +96,8 @@ class _BookingsPageState extends State<BookingsPage> {
           itemCount: docs.length,
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
-            final docId = docs[index].id;
-            return _buildBookingCard(r, data, docId, _selectedTab == 1);
+            final bookingId = docs[index].id;
+            return _buildBookingCard(r, data, bookingId, _selectedTab == 1);
           },
         );
       },
@@ -195,7 +195,7 @@ class _BookingsPageState extends State<BookingsPage> {
     );
   }
 
-  Widget _buildBookingCard(Responsive r, Map<String, dynamic> booking, String docId, bool showCancel) {
+  Widget _buildBookingCard(Responsive r, Map<String, dynamic> booking, String bookingId, bool showCancel) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: r.h(16)),
       decoration: const BoxDecoration(
@@ -258,7 +258,7 @@ class _BookingsPageState extends State<BookingsPage> {
               onTap: () async {
                 final confirmed = await CancelSheet.show(context);
                 if (confirmed == true) {
-                  await _bookingService.cancelBooking(docId);
+                  await _bookingService.cancelBooking(bookingId);
                 }
               },
               child: Text(

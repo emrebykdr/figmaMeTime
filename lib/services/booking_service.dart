@@ -6,7 +6,9 @@ class BookingService {
 
   String? get _currentUserId => UserService.currentUserId;
 
-  Future<void> addBooking({
+  /// Her randevu, kendi Firestore doküman ID'si ile eşleşen bir 'bookingId'
+  /// alanıyla oluşturulur (userId'nin users koleksiyonunda tutulma şekliyle aynı desen).
+  Future<String> addBooking({
     required String salon,
     required String professional,
     required String service,
@@ -14,17 +16,29 @@ class BookingService {
     required String time,
     required String price,
   }) async {
-    await _firestore.collection('bookings').add({
+    //bookingid kaydediliyor .
+    final docRef = _firestore.collection('bookings').doc();
+    await docRef.set({
+      'bookingId': docRef.id,
       'salon': salon,
       'professional': professional,
       'service': service,
       'date': date,
       'time': time,
       'price': price,
-      'status': 'upcoming',
+      'status': 'waiting',
       'userId': _currentUserId ?? '',
       'createdAt': FieldValue.serverTimestamp(),
     });
+    return docRef.id;
+  }
+
+  Stream<QuerySnapshot> getWaitingBookings() {
+    return _firestore
+        .collection('bookings')
+        .where('status', isEqualTo: 'waiting')
+        .where('userId', isEqualTo: _currentUserId ?? '')
+        .snapshots();
   }
 
   Stream<QuerySnapshot> getUpcomingBookings() {
@@ -41,6 +55,28 @@ class BookingService {
         .where('status', isEqualTo: 'past')
         .where('userId', isEqualTo: _currentUserId ?? '')
         .snapshots();
+  }
+
+  /// Admin panelinden randevu onaylandığında çağrılır: 'waiting' -> 'upcoming'.
+  Future<void> approveBooking(String bookingId) async {
+    await _firestore.collection('bookings').doc(bookingId).update({
+      'status': 'upcoming',
+    });
+  }
+
+  /// Belirli bir uzman ve tarih için zaten onaylanmış (upcoming) saatleri döner.
+  /// Randevu alma ekranında bu saatler seçilemez hale getirilir.
+  Future<Set<String>> getBookedTimes({
+    required String professional,
+    required String date,
+  }) async {
+    final snapshot = await _firestore
+        .collection('bookings')
+        .where('status', isEqualTo: 'upcoming')
+        .where('professional', isEqualTo: professional)
+        .where('date', isEqualTo: date)
+        .get();
+    return snapshot.docs.map((doc) => doc.data()['time'] as String).toSet();
   }
 
   Future<void> cancelBooking(String bookingId) async {
