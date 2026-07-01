@@ -419,6 +419,16 @@ body {
   font-family: inherit;
 }
 
+/* Bir input'un yanına buton koymak için (ör. Giriş Kodu + Kod Oluştur). */
+.field-row {
+  display: flex;
+  gap: 8px;
+}
+
+.field-row input {
+  flex: 1;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;

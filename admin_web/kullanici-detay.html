@@ -44,6 +44,14 @@
               <input type="text" id="edit-created" disabled />
             </label>
 
+            <label>
+              Giriş Kodu
+              <div class="field-row">
+                <input type="text" id="login-code" disabled />
+                <button type="button" id="generate-code-btn" class="secondary-btn">Kod Oluştur</button>
+              </div>
+            </label>
+
             <div class="form-actions">
               <button type="submit" class="approve-btn">Kaydet</button>
               <button type="button" id="restrict-btn" class="reject-btn">Randevuları Kısıtla</button>
@@ -67,6 +75,7 @@
                 <th>Saat</th>
                 <th>Fiyat</th>
                 <th>Durum</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="upcoming-body">

@@ -40,10 +40,24 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   late Timer _timer;
   int _remainingSeconds = 20;
 
+  String? _expectedCode;
+  String? _errorText;
+
   @override
   void initState() {
     super.initState();
     _startTimer();
+    _loadExpectedCode();
+  }
+
+  // Admin panelinden (kullanici-detay.html -> "Kod Oluştur") üretilen kod,
+  // users/{id}.loginCode alanında tutuluyor. Sabit '12345' yerine bu kontrol ediliyor.
+  Future<void> _loadExpectedCode() async {
+    final userData = await UserService().getUserByPhone(widget.phoneNumber);
+    if (!mounted) return;
+    setState(() {
+      _expectedCode = userData?['loginCode'] as String?;
+    });
   }
 
   void _startTimer() {
@@ -89,39 +103,50 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
 
   void _checkCode() async {
     final code = _controllers.map((c) => c.text).join();
-    if (code.length == 5 && code == '12345') {
-      await UserService().loginUser(phone: widget.phoneNumber);
-      if (!mounted) return;
-      if (widget.isSignUp) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const MainPage()),
-          (route) => false,
-        );
-      } else if (widget.noPreference) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => NoPreference(
+    if (code.length != 5) return;
+
+    if (_expectedCode == null || code != _expectedCode) {
+      setState(() {
+        _errorText = 'Invalid code';
+      });
+      return;
+    }
+
+    setState(() {
+      _errorText = null;
+    });
+
+    await UserService().loginUser(phone: widget.phoneNumber);
+    if (!mounted) return;
+    if (widget.isSignUp) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+        (route) => false,
+      );
+    } else if (widget.noPreference) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => NoPreference(
+          selectedService: widget.selectedService,
+          selectedPrice: widget.selectedPrice,
+        )),
+      );
+    } else {
+      final pro = widget.professional;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ProfessionalsCalendar(
+            name: pro?['name'] as String? ?? 'Anna Smith',
+            role: pro?['role'] as String? ?? 'Nail Designer',
+            rating: pro?['rating'] as double? ?? 5.0,
+            imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
             selectedService: widget.selectedService,
             selectedPrice: widget.selectedPrice,
-          )),
-        );
-      } else {
-        final pro = widget.professional;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProfessionalsCalendar(
-              name: pro?['name'] as String? ?? 'Anna Smith',
-              role: pro?['role'] as String? ?? 'Nail Designer',
-              rating: pro?['rating'] as double? ?? 5.0,
-              imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
-              selectedService: widget.selectedService,
-              selectedPrice: widget.selectedPrice,
-            ),
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
@@ -145,6 +170,18 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
               _buildSubtitle(r),
               SizedBox(height: r.h(32)),
               _buildCodeFields(r),
+              if (_errorText != null) ...[
+                SizedBox(height: r.h(8)),
+                Text(
+                  _errorText!,
+                  style: TextStyle(
+                    fontFamily: 'Raleway',
+                    fontWeight: FontWeight.w500,
+                    fontSize: r.sp(13),
+                    color: AppColors.cancel,
+                  ),
+                ),
+              ],
               const Spacer(),
               _buildResendRow(r),
               SizedBox(height: r.h(40)),

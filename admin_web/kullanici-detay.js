@@ -1,5 +1,6 @@
 import { db } from "./shared/firebase.js";
 import { mountSidebar, mountTopbar } from "./shared/layout.js";
+import { effectiveStatus } from "./shared/bookingStatus.js";
 import {
   doc,
   getDoc,
@@ -33,6 +34,8 @@ const restrictBtnEl = document.getElementById("restrict-btn");
 const restrictBadgeEl = document.getElementById("restrict-status-badge");
 const blockBtnEl = document.getElementById("block-btn");
 const blockBadgeEl = document.getElementById("block-status-badge");
+const loginCodeEl = document.getElementById("login-code");
+const generateCodeBtnEl = document.getElementById("generate-code-btn");
 const upcomingBodyEl = document.getElementById("upcoming-body");
 const pastBodyEl = document.getElementById("past-body");
 
@@ -78,9 +81,27 @@ async function loadUser() {
   phoneEl.value = currentUser.phone ?? "";
   emailEl.value = currentUser.email ?? "-";
   createdEl.value = formatDate(currentUser.createdAt);
+  loginCodeEl.value = currentUser.loginCode ?? "Henüz oluşturulmadı";
   renderRestrictState();
   renderBlockState();
 }
+
+// Mobil tarafta login_phone_code.dart artık girilen kodu buradaki
+// loginCode alanıyla karşılaştırıyor (sabit '12345' yerine).
+function generateLoginCode() {
+  return String(Math.floor(10000 + Math.random() * 90000));
+}
+
+generateCodeBtnEl.addEventListener("click", async () => {
+  if (!currentUser) return;
+  const code = generateLoginCode();
+  generateCodeBtnEl.disabled = true;
+  await updateDoc(doc(db, "users", currentUser.id), { loginCode: code });
+  currentUser.loginCode = code;
+  loginCodeEl.value = code;
+  generateCodeBtnEl.disabled = false;
+  formStatusEl.textContent = `Yeni giriş kodu oluşturuldu: ${code}`;
+});
 
 restrictBtnEl.addEventListener("click", async () => {
   if (!currentUser) return;
@@ -128,7 +149,7 @@ userFormEl.addEventListener("submit", async (e) => {
   formStatusEl.textContent = "Kaydedildi.";
 });
 
-function renderBookingRows(bodyEl, bookings) {
+function renderPastRows(bodyEl, bookings) {
   bodyEl.innerHTML = "";
   if (bookings.length === 0) {
     bodyEl.innerHTML = `<tr><td colspan="7" class="status">Kayıt yok.</td></tr>`;
@@ -150,6 +171,50 @@ function renderBookingRows(bodyEl, bookings) {
   });
 }
 
+// Gelecek Randevular tablosunda, randevular.js'teki Onay Kuyruğu/Tüm
+// Randevular ile aynı işlemler (onayla/iptal et/gelmedi) burada da yapılabilir.
+function renderUpcomingRows(bodyEl, bookings) {
+  bodyEl.innerHTML = "";
+  if (bookings.length === 0) {
+    bodyEl.innerHTML = `<tr><td colspan="8" class="status">Kayıt yok.</td></tr>`;
+    return;
+  }
+  bookings.forEach((booking) => {
+    const row = document.createElement("tr");
+    const displayStatus = effectiveStatus(booking);
+    const statusLabel = STATUS_LABELS[displayStatus] ?? displayStatus ?? "";
+    const isWaiting = booking.status === "waiting";
+    row.innerHTML = `
+      <td>${booking.salon ?? ""}</td>
+      <td>${booking.professional ?? ""}</td>
+      <td>${booking.service ?? ""}</td>
+      <td>${booking.date ?? ""}</td>
+      <td>${booking.time ?? ""}</td>
+      <td>${booking.price ?? ""}</td>
+      <td><span class="status-badge ${displayStatus ?? ""}">${statusLabel}</span></td>
+      <td class="row-actions">
+        ${isWaiting ? '<button class="approve-btn">Onayla</button>' : ""}
+        <button class="reject-btn cancel-btn">İptal Et</button>
+        <button class="reject-btn noshow-btn">Gelmedi</button>
+      </td>
+    `;
+
+    const approveBtn = row.querySelector(".approve-btn");
+    if (approveBtn) {
+      approveBtn.addEventListener("click", () => updateBookingStatus(booking.id, "upcoming"));
+    }
+    row.querySelector(".cancel-btn").addEventListener("click", () => updateBookingStatus(booking.id, "cancelled"));
+    row.querySelector(".noshow-btn").addEventListener("click", () => updateBookingStatus(booking.id, "no-show"));
+
+    bodyEl.appendChild(row);
+  });
+}
+
+async function updateBookingStatus(bookingId, status) {
+  await updateDoc(doc(db, "bookings", bookingId), { status });
+  await loadBookingHistory();
+}
+
 async function loadBookingHistory() {
   if (!userId) return;
 
@@ -164,8 +229,8 @@ async function loadBookingHistory() {
     .filter((b) => b.status === "past" || b.status === "cancelled" || b.status === "no-show")
     .sort((a, b) => (b.dateIso ?? "").localeCompare(a.dateIso ?? ""));
 
-  renderBookingRows(upcomingBodyEl, upcoming);
-  renderBookingRows(pastBodyEl, past);
+  renderUpcomingRows(upcomingBodyEl, upcoming);
+  renderPastRows(pastBodyEl, past);
 }
 
 loadUser();

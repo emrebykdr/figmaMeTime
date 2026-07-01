@@ -1,6 +1,7 @@
 import { db } from "./shared/firebase.js";
 import { mountSidebar, mountTopbar } from "./shared/layout.js";
 import { PAGE_SIZE, renderPagination } from "./shared/pagination.js";
+import { effectiveStatus } from "./shared/bookingStatus.js";
 import {
   collection,
   query,
@@ -137,14 +138,17 @@ async function loadAllBookings() {
   const statusFilter = allStatusFilterEl.value;
   allStatusEl.textContent = "Yükleniyor...";
 
-  const bookingsRef = collection(db, "bookings");
-  const q =
-    statusFilter === "all"
-      ? bookingsRef
-      : query(bookingsRef, where("status", "==", statusFilter));
-  const snapshot = await getDocs(q);
+  // 'past' statüsü Firestore'da gerçekten set edilmiyor (bkz. shared/bookingStatus.js),
+  // bu yüzden filtreyi Firestore'a değil, tüm kayıtları çekip client'ta
+  // effectiveStatus()'a göre uyguluyoruz.
+  const snapshot = await getDocs(collection(db, "bookings"));
+  const allBookings = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
 
-  allBookingsData = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  allBookingsData =
+    statusFilter === "all"
+      ? allBookings
+      : allBookings.filter((b) => effectiveStatus(b) === statusFilter);
+
   allBookingsData.sort((a, b) => a.dateIso.localeCompare(b.dateIso));
   allPage = 1;
   renderAllBookingsPage();
@@ -164,8 +168,11 @@ function renderAllBookingsPage() {
   const start = (allPage - 1) * PAGE_SIZE;
   allBookingsData.slice(start, start + PAGE_SIZE).forEach((booking) => {
     const row = document.createElement("tr");
-    const statusLabel = STATUS_LABELS[booking.status] ?? booking.status ?? "";
-    // Sadece hâlâ aktif (bekleyen/onaylı) randevular iptal/gelmedi olarak işaretlenebilir.
+    const displayStatus = effectiveStatus(booking);
+    const statusLabel = STATUS_LABELS[displayStatus] ?? displayStatus ?? "";
+    // Rozet, tarihi geçmiş randevularda 'Geçmiş' gösterir ama işlemler gerçek
+    // statüye (waiting/upcoming) göre çalışmaya devam eder — admin, tarihi
+    // geçmiş ama hâlâ kapatılmamış bir randevuyu iptal/gelmedi olarak işaretleyebilir.
     const isActive = booking.status === "waiting" || booking.status === "upcoming";
     row.innerHTML = `
       <td>${booking.salon ?? ""}</td>
@@ -174,7 +181,7 @@ function renderAllBookingsPage() {
       <td>${booking.date ?? ""}</td>
       <td>${booking.time ?? ""}</td>
       <td>${booking.price ?? ""}</td>
-      <td><span class="status-badge ${booking.status ?? ""}">${statusLabel}</span></td>
+      <td><span class="status-badge ${displayStatus ?? ""}">${statusLabel}</span></td>
       <td class="row-actions">
         <button class="secondary-btn edit-btn">Düzenle</button>
         ${isActive ? '<button class="reject-btn cancel-btn">İptal Et</button>' : ""}
