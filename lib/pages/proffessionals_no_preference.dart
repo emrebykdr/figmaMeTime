@@ -368,6 +368,7 @@ class _NoPreferenceState extends State<NoPreference> {
                     date: '$dayName, ${_selectedDate.day}',
                     time: _selectedTime!,
                     price: widget.selectedPrice,
+                    appointmentDate: _selectedDate,
                   );
                   if (!mounted) return;
                   Navigator.push(

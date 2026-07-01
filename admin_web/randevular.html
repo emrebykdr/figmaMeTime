@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Randevular - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <h1 class="page-title">Randevular</h1>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="queue">Onay Kuyruğu</button>
+          <button class="tab-btn" data-tab="all">Tüm Randevular</button>
+          <button class="tab-btn" data-tab="calendar">Takvim</button>
+          <button class="tab-btn" data-tab="new">Yeni Randevu</button>
+        </div>
+
+        <section class="card tab-panel" data-panel="queue">
+          <div class="card-header">
+            <h2>Onay Kuyruğu</h2>
+            <p id="status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Salon</th>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="bookings-body">
+              <!-- randevular.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card tab-panel" data-panel="all" hidden>
+          <div class="card-header">
+            <h2>Tüm Randevular</h2>
+            <select id="all-status-filter" class="status-filter">
+              <option value="all">Tümü</option>
+              <option value="waiting">Bekleyen</option>
+              <option value="upcoming">Onaylı</option>
+              <option value="past">Geçmiş</option>
+              <option value="cancelled">İptal Edildi</option>
+              <option value="no-show">Gelmedi</option>
+            </select>
+            <p id="all-status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Salon</th>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="all-bookings-body">
+              <!-- randevular.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card tab-panel" data-panel="calendar" hidden>
+          <div class="card-header">
+            <h2>Takvim</h2>
+            <select id="calendar-professional" class="status-filter">
+              <option value="Anna Smith">Anna Smith</option>
+              <option value="Jordan Mcmiller">Jordan Mcmiller</option>
+              <option value="Paty Sinclair">Paty Sinclair</option>
+            </select>
+            <input type="date" id="calendar-date" class="status-filter" />
+          </div>
+          <p id="calendar-status" class="status"></p>
+          <div class="slot-grid" id="calendar-slots"></div>
+        </section>
+
+        <section class="card tab-panel" data-panel="new" hidden>
+          <div class="card-header">
+            <h2 id="new-form-title">Yeni Randevu</h2>
+          </div>
+          <form id="new-booking-form" class="booking-form">
+            <label>
+              Kullanıcı
+              <div class="combobox" id="user-combobox">
+                <input
+                  type="text"
+                  id="new-user-search"
+                  placeholder="İsim veya telefon ile ara..."
+                  autocomplete="off"
+                />
+                <input type="hidden" id="new-user" />
+                <div class="combobox-options" id="user-options" hidden></div>
+              </div>
+            </label>
+
+            <label>
+              Uzman
+              <select id="new-professional" required>
+                <option value="Anna Smith">Anna Smith</option>
+                <option value="Jordan Mcmiller">Jordan Mcmiller</option>
+                <option value="Paty Sinclair">Paty Sinclair</option>
+              </select>
+            </label>
+
+            <label>
+              Hizmet
+              <select id="new-service" required>
+                <option value="Basic Manicure" data-price="$30">Basic Manicure - $30</option>
+                <option value="Basic Pedicure" data-price="$35">Basic Pedicure - $35</option>
+                <option value="Gel Manicure" data-price="$50">Gel Manicure - $50</option>
+                <option value="Gel Pedicure" data-price="$55">Gel Pedicure - $55</option>
+                <option value="Acrylic Extensions" data-price="$100">Acrylic Extensions - $100</option>
+              </select>
+            </label>
+
+            <label>
+              Tarih
+              <input type="date" id="new-date" required />
+            </label>
+
+            <label>
+              Saat
+              <select id="new-time" required></select>
+            </label>
+
+            <label>
+              Durum
+              <select id="new-status">
+                <option value="upcoming">Onaylı</option>
+                <option value="waiting">Bekleyen</option>
+              </select>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" id="new-submit-btn" class="approve-btn">Randevu Oluştur</button>
+              <button type="button" id="new-cancel-btn" class="secondary-btn" hidden>İptal</button>
+            </div>
+            <p id="new-form-status" class="status"></p>
+          </form>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="randevular.js"></script>
+</body>
+</html>

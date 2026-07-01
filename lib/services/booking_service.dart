@@ -15,6 +15,7 @@ class BookingService {
     required String date,
     required String time,
     required String price,
+    required DateTime appointmentDate,
   }) async {
     //bookingid kaydediliyor .
     final docRef = _firestore.collection('bookings').doc();
@@ -24,6 +25,10 @@ class BookingService {
       'professional': professional,
       'service': service,
       'date': date,
+      // Randevunun gerçekleşeceği tarih, yıl/ay dahil sıralanabilir formatta
+      // (ör. '2026-07-15'). 'date' alanı sadece görünüm metni (ay/yıl yok),
+      // admin panelindeki sıralama/takvim/filtreleme bu alana göre çalışır.
+      'dateIso': _isoDate(appointmentDate),
       'time': time,
       'price': price,
       'status': 'waiting',
@@ -31,6 +36,12 @@ class BookingService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     return docRef.id;
+  }
+
+  String _isoDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   Stream<QuerySnapshot> getWaitingBookings() {

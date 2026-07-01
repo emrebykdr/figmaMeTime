@@ -408,6 +408,7 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                     date: '$dayName, ${_selectedDate.day}',
                     time: _selectedTime!,
                     price: widget.selectedPrice,
+                    appointmentDate: _selectedDate,
                   );
                   if (!mounted) return;
                   Navigator.push(

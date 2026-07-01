@@ -7,6 +7,8 @@
   --white: #ffffff;
   --background: #ffffff;
   --border: #e0e0e0;
+  --cancel: #ed7354;
+  --cancel-text: #ff666a;
   /* AppColors'ta karşılığı yok; kartların arkasındaki nötr sayfa zemini için. */
   --page-bg: #f4f4f5;
 }
@@ -183,6 +185,34 @@ body {
   color: var(--almost-black);
 }
 
+/* Sekmeler (Randevular sayfasındaki Onay Kuyruğu / Tüm Randevular vb.) */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+  color: var(--almost-black);
+}
+
+.tab-btn.active {
+  color: var(--almost-black);
+  border-bottom-color: var(--primary);
+}
+
 /* İçerik kartı (tablo vb.) */
 .card {
   background: var(--white);
@@ -208,6 +238,207 @@ body {
   color: var(--tertiary);
   font-size: 13px;
   margin: 0;
+}
+
+.status-filter {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--secondary);
+  background: var(--white);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Bekleyen: primary'nin soluk tonu (henüz karar verilmemiş, nötr). */
+.status-badge.waiting {
+  background: rgba(253, 204, 197, 0.35);
+  color: var(--secondary);
+}
+
+/* Onaylı: primary'nin dolu hali (butonlarla aynı "aktif/pozitif" vurgu). */
+.status-badge.upcoming {
+  background: var(--primary);
+  color: var(--almost-black);
+}
+
+/* Geçmiş: sayfa zemini tonu, soluk metin. */
+.status-badge.past {
+  background: var(--page-bg);
+  color: var(--tertiary);
+}
+
+/* İptal edildi: AppColors.cancel (mobildeki "Cancel" butonuyla aynı renk ailesi). */
+.status-badge.cancelled {
+  background: rgba(237, 115, 84, 0.15);
+  color: var(--cancel);
+}
+
+/* Gelmedi: AppColors.cancelText, iptalden biraz daha "alarm" tonunda. */
+.status-badge.no-show {
+  background: rgba(255, 102, 106, 0.15);
+  color: var(--cancel-text);
+}
+
+/* İptal Et / Gelmedi / Reddet butonları */
+.reject-btn {
+  background: none;
+  border: 1px solid var(--cancel);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: var(--cancel);
+  cursor: pointer;
+}
+
+.reject-btn:hover {
+  background: rgba(237, 115, 84, 0.1);
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Takvim: uzman/tarih için saat müsaitlik grid'i */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.slot-pill {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.slot-pill span {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--almost-black);
+}
+
+.slot-pill small {
+  font-size: 12px;
+  color: var(--tertiary);
+}
+
+.slot-pill.busy {
+  background: var(--page-bg);
+  border-color: var(--border);
+}
+
+.slot-pill.busy span {
+  color: var(--tertiary);
+}
+
+.slot-pill.free {
+  background: rgba(253, 204, 197, 0.2);
+  border-color: var(--primary);
+}
+
+/* Yeni Randevu formu */
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.booking-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+.booking-form select,
+.booking-form input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--almost-black);
+  background: var(--white);
+  font-family: inherit;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Kullanıcı arama kutusu (combobox) */
+.combobox {
+  position: relative;
+}
+
+.combobox input[type="text"] {
+  width: 100%;
+}
+
+.combobox-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.combobox-option {
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--almost-black);
+  cursor: pointer;
+}
+
+.combobox-option:hover {
+  background: var(--page-bg);
+}
+
+.combobox-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--tertiary);
+}
+
+.secondary-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: var(--secondary);
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: var(--page-bg);
 }
 
 .bookings-table {
