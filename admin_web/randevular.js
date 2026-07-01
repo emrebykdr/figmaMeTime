@@ -184,12 +184,18 @@ function renderAllBookingsPage() {
       <td><span class="status-badge ${displayStatus ?? ""}">${statusLabel}</span></td>
       <td class="row-actions">
         <button class="secondary-btn edit-btn">Düzenle</button>
+        ${isActive ? '<button class="secondary-btn past-btn">Geçmiş Yap</button>' : ""}
         ${isActive ? '<button class="reject-btn cancel-btn">İptal Et</button>' : ""}
         ${isActive ? '<button class="reject-btn noshow-btn">Gelmedi</button>' : ""}
       </td>
     `;
 
     row.querySelector(".edit-btn").addEventListener("click", () => startEdit(booking));
+
+    const pastBtn = row.querySelector(".past-btn");
+    if (pastBtn) {
+      pastBtn.addEventListener("click", () => updateBookingStatus(booking.id, "past"));
+    }
 
     const cancelBtn = row.querySelector(".cancel-btn");
     if (cancelBtn) {
@@ -297,6 +303,43 @@ TIME_SLOTS.forEach((time) => {
   option.textContent = time;
   newTimeEl.appendChild(option);
 });
+
+// Uzman ve hizmet dropdown'ları admin_web/uzmanlar.html ve hizmetler.html
+// üzerinden yönetilen koleksiyonlardan geliyor; buradaki listeler sabit
+// değil, ekle/düzenle/sil işlemleri (fiyat değişikliği dahil) buraya da yansır.
+async function loadProfessionalOptions() {
+  const snapshot = await getDocs(collection(db, "professionals"));
+  const names = snapshot.docs.map((d) => d.data().name ?? "").filter(Boolean).sort();
+
+  [newProfessionalEl, calendarProfessionalEl].forEach((selectEl) => {
+    const previous = selectEl.value;
+    selectEl.innerHTML = "";
+    names.forEach((name) => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      selectEl.appendChild(option);
+    });
+    if (names.includes(previous)) selectEl.value = previous;
+  });
+}
+
+async function loadServiceOptions() {
+  const snapshot = await getDocs(collection(db, "services"));
+  const services = snapshot.docs.map((d) => d.data()).sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+
+  newServiceEl.innerHTML = "";
+  services.forEach((service) => {
+    const option = document.createElement("option");
+    option.value = service.name;
+    option.dataset.price = service.price ?? "";
+    option.textContent = `${service.name} - ${service.price ?? ""}`;
+    newServiceEl.appendChild(option);
+  });
+}
+
+loadProfessionalOptions();
+loadServiceOptions();
 
 // Kullanıcı seçimi bir arama kutusu (combobox) ile yapılıyor: kullanıcı
 // sayısı arttıkça uzun bir dropdown yerine isim/telefonla filtrelenebilen

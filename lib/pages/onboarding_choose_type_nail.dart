@@ -7,23 +7,47 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/pages/onboarding_choose_proffesionel.dart';
+import 'package:figmaap/services/service_catalog_service.dart';
 
-class OnboardingChooseTypeNail extends StatelessWidget {
+class OnboardingChooseTypeNail extends StatefulWidget {
   final bool isLoggedIn;
+  // onboarding_choose_service.dart'taki kategori kartlarından geliyor
+  // (Nail/Eyebrowns/Massage/Hair). Doğrudan çağrılan yerlerde (ör.
+  // main_page.dart'taki "Book again") varsayılan olarak Nail kalır.
+  final String category;
 
-  const OnboardingChooseTypeNail({super.key, this.isLoggedIn = false});
+  const OnboardingChooseTypeNail({
+    super.key,
+    this.isLoggedIn = false,
+    this.category = 'Nail',
+  });
+
+  @override
+  State<OnboardingChooseTypeNail> createState() => _OnboardingChooseTypeNailState();
+}
+
+class _OnboardingChooseTypeNailState extends State<OnboardingChooseTypeNail> {
+  List<Map<String, dynamic>> _services = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    final services = await ServiceCatalogService().getServices(category: widget.category);
+    if (!mounted) return;
+    setState(() {
+      _services = services;
+      _loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final r = Responsive(context);
-
-    final services = [
-      {'image': 'assets/images/c_1.jpg', 'title': 'Basic Manicure', 'price': '\$30'},
-      {'image': 'assets/images/c_2.jpg', 'title': 'Basic Pedicure', 'price': '\$35'},
-      {'image': 'assets/images/c_3.jpg', 'title': 'Gel Manicure', 'price': '\$50'},
-      {'image': 'assets/images/c_4.jpg', 'title': 'Gel Pedicure', 'price': '\$55'},
-      {'image': 'assets/images/c_5.jpg', 'title': 'Acrylic Extensions', 'price': '\$100'},
-    ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -38,28 +62,44 @@ class OnboardingChooseTypeNail extends StatelessWidget {
             _buildTitle(r),
             SizedBox(height: r.h(32)),
             Expanded(
-              child: ListView.builder(
-                itemCount: services.length,
-                itemBuilder: (context, index) {
-                  return ServiceCard(
-                    imagePath: services[index]['image']!,
-                    title: services[index]['title']!,
-                    price: services[index]['price']!,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OnboardingChooseProfessional(
-                            isLoggedIn: isLoggedIn,
-                            selectedService: services[index]['title']!,
-                            selectedPrice: services[index]['price']!,
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _services.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No services available yet.',
+                            style: TextStyle(
+                              fontFamily: 'Raleway',
+                              fontWeight: FontWeight.w500,
+                              fontSize: r.sp(14),
+                              color: AppColors.tertiary,
+                            ),
                           ),
+                        )
+                      : ListView.builder(
+                          itemCount: _services.length,
+                          itemBuilder: (context, index) {
+                            final service = _services[index];
+                            final title = service['name'] as String? ?? '';
+                            final price = service['price'] as String? ?? '';
+                            return ServiceCard(
+                              title: title,
+                              price: price,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OnboardingChooseProfessional(
+                                      isLoggedIn: widget.isLoggedIn,
+                                      selectedService: title,
+                                      selectedPrice: price,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
             ),
           ],
         ),

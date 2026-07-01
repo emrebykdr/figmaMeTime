@@ -86,7 +86,7 @@ class OnboardingChooseService extends StatelessWidget {
   }
 
   Widget _getTargetPage(String label) {
-    return const OnboardingChooseTypeNail();
+    return OnboardingChooseTypeNail(category: label);
   }
 
   Widget _buildServiceCard(

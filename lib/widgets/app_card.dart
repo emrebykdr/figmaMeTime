@@ -14,7 +14,7 @@ class ServiceCard extends StatelessWidget {
 
   const ServiceCard({
     super.key,
-    required this.imagePath,
+    this.imagePath = '',
     required this.title,
     required this.price,
     this.isSelected = false,
@@ -45,12 +45,21 @@ class ServiceCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(r.r(5)),
-              child: Image.asset(
-                imagePath,
-                width: r.w(72),
-                height: r.w(72),
-                fit: BoxFit.cover,
-              ),
+              // admin_web/hizmetler.html'de hizmetler için fotoğraf alanı
+              // yok, bu yüzden imagePath çoğunlukla boş gelir.
+              child: imagePath.isEmpty
+                  ? Container(
+                      width: r.w(72),
+                      height: r.w(72),
+                      color: AppColors.cardBackground,
+                      child: Icon(Icons.spa, color: AppColors.white, size: r.w(32)),
+                    )
+                  : Image.asset(
+                      imagePath,
+                      width: r.w(72),
+                      height: r.w(72),
+                      fit: BoxFit.cover,
+                    ),
             ),
             SizedBox(width: r.w(16)),
             Expanded(
@@ -138,12 +147,7 @@ class ProfessionalCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(r.r(12)),
-              child: Image.asset(
-                imagePath,
-                width: r.w(83),
-                height: r.w(83),
-                fit: BoxFit.cover,
-              ),
+              child: _ProfessionalPhoto(imagePath: imagePath, size: r.w(83)),
             ),
             SizedBox(width: r.w(16)),
             Expanded(
@@ -196,6 +200,39 @@ class ProfessionalCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// Uzman fotoğrafları artık admin panelinden Firebase Storage'a yükleniyor
+// (bkz. admin_web/uzmanlar.html), yani asset değil network görseli.
+// imagePath boşsa ya da yükleme başarısız olursa basit bir ikon gösterilir.
+class _ProfessionalPhoto extends StatelessWidget {
+  final String imagePath;
+  final double size;
+
+  const _ProfessionalPhoto({required this.imagePath, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    if (imagePath.isEmpty) {
+      return _placeholder();
+    }
+    return Image.network(
+      imagePath,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _placeholder(),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      width: size,
+      height: size,
+      color: AppColors.cardBackground,
+      child: Icon(Icons.person, color: AppColors.white, size: size * 0.5),
     );
   }
 }

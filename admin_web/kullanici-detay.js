@@ -194,6 +194,7 @@ function renderUpcomingRows(bodyEl, bookings) {
       <td><span class="status-badge ${displayStatus ?? ""}">${statusLabel}</span></td>
       <td class="row-actions">
         ${isWaiting ? '<button class="approve-btn">Onayla</button>' : ""}
+        <button class="secondary-btn past-btn">Geçmiş Yap</button>
         <button class="reject-btn cancel-btn">İptal Et</button>
         <button class="reject-btn noshow-btn">Gelmedi</button>
       </td>
@@ -203,6 +204,7 @@ function renderUpcomingRows(bodyEl, bookings) {
     if (approveBtn) {
       approveBtn.addEventListener("click", () => updateBookingStatus(booking.id, "upcoming"));
     }
+    row.querySelector(".past-btn").addEventListener("click", () => updateBookingStatus(booking.id, "past"));
     row.querySelector(".cancel-btn").addEventListener("click", () => updateBookingStatus(booking.id, "cancelled"));
     row.querySelector(".noshow-btn").addEventListener("click", () => updateBookingStatus(booking.id, "no-show"));
 

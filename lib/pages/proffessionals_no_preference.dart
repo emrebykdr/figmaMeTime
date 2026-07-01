@@ -6,6 +6,7 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 import 'package:figmaap/pages/successful_page.dart';
 import 'package:figmaap/services/booking_service.dart';
+import 'package:figmaap/services/professional_service.dart';
 
 class NoPreference extends StatefulWidget {
   final String selectedService;
@@ -33,12 +34,23 @@ class _NoPreferenceState extends State<NoPreference> {
   ];
   final _dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  final _availableSlots = [
-    {'time': '10:00 am', 'with': 'Jordan'},
-    {'time': '10:30 am', 'with': 'Anna'},
-    {'time': '04:30 pm', 'with': 'Paty'},
-    {'time': '06:00 pm', 'with': 'Jordan'},
-  ];
+  // Admin panelindeki (admin_web/uzmanlar.js) TIME_SLOTS/DAY_ORDER ile aynı.
+  static const _timeSlots = ['10:00 am', '11:00 am', '01:30 pm', '03:00 pm', '05:00 pm', '07:00 pm'];
+  static const _dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  List<Map<String, dynamic>> _professionals = [];
+  bool _loadingProfessionals = true;
+  // Seçili gün için, tüm uzmanların çalışma saatlerinden üretilen liste:
+  // [{'time': '10:00 am', 'with': 'Anna Smith'}, ...]. Sabit liste değil.
+  List<Map<String, String>> _availableSlots = [];
+
+  String _dayKeyFor(DateTime date) => _dayKeys[date.weekday - 1];
+
+  String _isoDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
 
   List<DateTime> get _days {
     final now = DateTime.now();
@@ -48,15 +60,42 @@ class _NoPreferenceState extends State<NoPreference> {
   @override
   void initState() {
     super.initState();
-    _loadBookedSlots();
+    _loadProfessionals();
+  }
+
+  Future<void> _loadProfessionals() async {
+    final professionals = await ProfessionalService().getProfessionals();
+    if (!mounted) return;
+    setState(() {
+      _professionals = professionals;
+      _loadingProfessionals = false;
+    });
+    await _loadBookedSlots();
   }
 
   Future<void> _loadBookedSlots() async {
     final dayName = _dayNames[_selectedDate.weekday % 7];
     final date = '$dayName, ${_selectedDate.day}';
-    final professionals = _availableSlots.map((s) => s['with']!).toSet();
+    final dayKey = _dayKeyFor(_selectedDate);
+    final isoDate = _isoDate(_selectedDate);
+
+    // Seçili günde izinli olmayan, o gün çalışan uzmanlardan saat listesi üretilir.
+    final slots = <Map<String, String>>[];
+    for (final time in _timeSlots) {
+      for (final professional in _professionals) {
+        final daysOff = (professional['daysOff'] as List?)?.cast<String>() ?? [];
+        if (daysOff.contains(isoDate)) continue;
+        final workingHours = professional['workingHours'] as Map<String, dynamic>?;
+        final dayTimes = (workingHours?[dayKey] as List?)?.cast<String>() ?? [];
+        if (dayTimes.contains(time)) {
+          slots.add({'time': time, 'with': professional['name'] as String? ?? ''});
+        }
+      }
+    }
+
+    final professionalNames = slots.map((s) => s['with']!).toSet();
     final result = <String, Set<String>>{};
-    for (final professional in professionals) {
+    for (final professional in professionalNames) {
       result[professional] = await BookingService().getBookedTimes(
         professional: professional,
         date: date,
@@ -64,6 +103,7 @@ class _NoPreferenceState extends State<NoPreference> {
     }
     if (!mounted) return;
     setState(() {
+      _availableSlots = slots;
       _bookedByProfessional = result;
       if (_selectedTime != null) {
         final slot = _availableSlots.firstWhere(
@@ -71,7 +111,7 @@ class _NoPreferenceState extends State<NoPreference> {
           orElse: () => {},
         );
         final withName = slot['with'];
-        if (withName != null &&
+        if (withName == null ||
             (_bookedByProfessional[withName]?.contains(_selectedTime) ?? false)) {
           _selectedTime = null;
         }
@@ -298,6 +338,22 @@ class _NoPreferenceState extends State<NoPreference> {
   }
 
   Widget _buildTimeGrid(Responsive r) {
+    if (_loadingProfessionals) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_availableSlots.isEmpty) {
+      return Text(
+        'No available slots for this day.',
+        style: TextStyle(
+          fontFamily: 'Raleway',
+          fontWeight: FontWeight.w500,
+          fontSize: r.sp(14),
+          color: AppColors.tertiary,
+        ),
+      );
+    }
+
     return Wrap(
       spacing: r.w(12),
       runSpacing: r.h(12),

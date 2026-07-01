@@ -14,6 +14,11 @@ class ProfessionalsCalendar extends StatefulWidget {
   final String imagePath;
   final String selectedService;
   final String selectedPrice;
+  // Admin panelinde (admin_web/uzmanlar.html) tanımlanan haftalık müsaitlik:
+  // {'mon': ['10:00 am', ...], 'tue': [...], ...}. Gün anahtarları Pazartesi=mon.
+  final Map<String, dynamic> workingHours;
+  // İzin/tatil günleri, ISO tarih string'i olarak ('2026-07-15').
+  final List<String> daysOff;
 
   const ProfessionalsCalendar({
     super.key,
@@ -23,6 +28,8 @@ class ProfessionalsCalendar extends StatefulWidget {
     required this.imagePath,
     this.selectedService = 'Basic Manicure',
     this.selectedPrice = '\$30',
+    this.workingHours = const {},
+    this.daysOff = const [],
   });
 
   @override
@@ -52,14 +59,26 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
 
   final _dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  final _availableTimes = [
-    '10:00 am',
-    '11:00 am',
-    '01:30 pm',
-    '03:00 pm',
-    '07:00 pm',
-    '05:00 pm',
-  ];
+  // Admin panelindeki (admin_web/uzmanlar.js) DAY_ORDER ile aynı sıra/anahtarlar.
+  static const _dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  String _dayKeyFor(DateTime date) => _dayKeys[date.weekday - 1];
+
+  String _isoDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
+  /// Seçili günde uzmanın izinli olup olmadığına ve o gün için tanımlı
+  /// çalışma saatlerine göre hesaplanan müsait saat listesi.
+  List<String> get _availableTimes {
+    if (widget.daysOff.contains(_isoDate(_selectedDate))) return [];
+    final dayKey = _dayKeyFor(_selectedDate);
+    final slots = widget.workingHours[dayKey];
+    if (slots is List) return slots.cast<String>();
+    return [];
+  }
 
   List<DateTime> get _days {
     final now = DateTime.now();
@@ -152,12 +171,25 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(r.r(12)),
-          child: Image.asset(
-            widget.imagePath,
-            width: r.w(100),
-            height: r.w(100),
-            fit: BoxFit.cover,
-          ),
+          child: widget.imagePath.isEmpty
+              ? Container(
+                  width: r.w(100),
+                  height: r.w(100),
+                  color: AppColors.cardBackground,
+                  child: Icon(Icons.person, color: AppColors.white, size: r.w(50)),
+                )
+              : Image.network(
+                  widget.imagePath,
+                  width: r.w(100),
+                  height: r.w(100),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: r.w(100),
+                    height: r.w(100),
+                    color: AppColors.cardBackground,
+                    child: Icon(Icons.person, color: AppColors.white, size: r.w(50)),
+                  ),
+                ),
         ),
         SizedBox(height: r.h(12)),
         Text(
@@ -348,6 +380,18 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
   }
 
   Widget _buildTimeGrid(Responsive r) {
+    if (_availableTimes.isEmpty) {
+      return Text(
+        'Not available on this day.',
+        style: TextStyle(
+          fontFamily: 'Raleway',
+          fontWeight: FontWeight.w500,
+          fontSize: r.sp(14),
+          color: AppColors.tertiary,
+        ),
+      );
+    }
+
     return Wrap(
       spacing: r.w(12),
       runSpacing: r.h(12),

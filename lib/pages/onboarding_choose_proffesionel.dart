@@ -9,6 +9,7 @@ import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 import 'package:figmaap/pages/professionals_calendar.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
+import 'package:figmaap/services/professional_service.dart';
 
 class OnboardingChooseProfessional extends StatefulWidget {
   final bool isLoggedIn;
@@ -30,27 +31,23 @@ class OnboardingChooseProfessional extends StatefulWidget {
 class _OnboardingChooseProfessionalState
     extends State<OnboardingChooseProfessional> {
   int? _selectedIndex;
+  List<Map<String, dynamic>> _professionals = [];
+  bool _loading = true;
 
-  final professionals = [
-    {
-      'image': 'assets/images/prof_1.jpg',
-      'name': 'Anna Smith',
-      'role': 'Nail designer',
-      'rating': 5.0,
-    },
-    {
-      'image': 'assets/images/prof_2.jpg',
-      'name': 'Jordan Mcmiller',
-      'role': 'Nail designer',
-      'rating': 4.9,
-    },
-    {
-      'image': 'assets/images/prof_3.jpg',
-      'name': 'Paty Sinclair',
-      'role': 'Nail designer',
-      'rating': 4.9,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadProfessionals();
+  }
+
+  Future<void> _loadProfessionals() async {
+    final professionals = await ProfessionalService().getProfessionals();
+    if (!mounted) return;
+    setState(() {
+      _professionals = professionals;
+      _loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,41 +66,60 @@ class _OnboardingChooseProfessionalState
             _buildTitle(r),
             SizedBox(height: r.h(32)),
             Expanded(
-              child: ListView.builder(
-                itemCount: professionals.length,
-                itemBuilder: (context, index) {
-                  final pro = professionals[index];
-                  return ProfessionalCard(
-                    imagePath: pro['image'] as String,
-                    name: pro['name'] as String,
-                    role: pro['role'] as String,
-                    rating: pro['rating'] as double,
-                    isSelected: _selectedIndex == index,
-                    onTap: () {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                      if (widget.isLoggedIn) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProfessionalsCalendar(
-                              name: pro['name'] as String,
-                              role: pro['role'] as String,
-                              rating: pro['rating'] as double,
-                              imagePath: pro['image'] as String,
-                              selectedService: widget.selectedService,
-                              selectedPrice: widget.selectedPrice,
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _professionals.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No professionals available yet.',
+                            style: TextStyle(
+                              fontFamily: 'Raleway',
+                              fontWeight: FontWeight.w500,
+                              fontSize: r.sp(14),
+                              color: AppColors.tertiary,
                             ),
                           ),
-                        );
-                      } else {
-                        LoginSheet.show(context, professional: pro, selectedService: widget.selectedService, selectedPrice: widget.selectedPrice);
-                      }
-                    },
-                  );
-                },
-              ),
+                        )
+                      : ListView.builder(
+                          itemCount: _professionals.length,
+                          itemBuilder: (context, index) {
+                            final pro = _professionals[index];
+                            final rating = (pro['rating'] as num?)?.toDouble() ?? 5.0;
+                            return ProfessionalCard(
+                              imagePath: pro['photoUrl'] as String? ?? '',
+                              name: pro['name'] as String? ?? '',
+                              role: pro['role'] as String? ?? '',
+                              rating: rating,
+                              isSelected: _selectedIndex == index,
+                              onTap: () {
+                                setState(() {
+                                  _selectedIndex = index;
+                                });
+                                if (widget.isLoggedIn) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ProfessionalsCalendar(
+                                        name: pro['name'] as String? ?? '',
+                                        role: pro['role'] as String? ?? '',
+                                        rating: rating,
+                                        imagePath: pro['photoUrl'] as String? ?? '',
+                                        selectedService: widget.selectedService,
+                                        selectedPrice: widget.selectedPrice,
+                                        workingHours:
+                                            pro['workingHours'] as Map<String, dynamic>? ?? {},
+                                        daysOff:
+                                            (pro['daysOff'] as List?)?.cast<String>() ?? [],
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  LoginSheet.show(context, professional: pro, selectedService: widget.selectedService, selectedPrice: widget.selectedPrice);
+                                }
+                              },
+                            );
+                          },
+                        ),
             ),
             _buildNoPreference(r),
             SizedBox(height: r.h(40)),

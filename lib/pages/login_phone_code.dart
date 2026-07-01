@@ -140,10 +140,12 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
           builder: (_) => ProfessionalsCalendar(
             name: pro?['name'] as String? ?? 'Anna Smith',
             role: pro?['role'] as String? ?? 'Nail Designer',
-            rating: pro?['rating'] as double? ?? 5.0,
-            imagePath: pro?['image'] as String? ?? 'assets/images/prof_1.jpg',
+            rating: (pro?['rating'] as num?)?.toDouble() ?? 5.0,
+            imagePath: pro?['photoUrl'] as String? ?? '',
             selectedService: widget.selectedService,
             selectedPrice: widget.selectedPrice,
+            workingHours: pro?['workingHours'] as Map<String, dynamic>? ?? {},
+            daysOff: (pro?['daysOff'] as List?)?.cast<String>() ?? [],
           ),
         ),
       );

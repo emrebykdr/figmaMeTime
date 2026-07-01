@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hizmetler - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <h1 class="page-title">Hizmetler</h1>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Hizmet Listesi</h2>
+            <p id="list-status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>Kategori</th>
+                <th>Süre</th>
+                <th>Fiyat</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="services-body">
+              <!-- hizmetler.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 id="form-title">Yeni Hizmet</h2>
+          </div>
+
+          <form id="service-form" class="booking-form">
+            <label>
+              İsim
+              <input type="text" id="service-name" placeholder="Basic Manicure" required />
+            </label>
+
+            <label>
+              Kategori
+              <select id="service-category" required>
+                <option value="Nail">Nail</option>
+                <option value="Eyebrowns">Eyebrowns</option>
+                <option value="Massage">Massage</option>
+                <option value="Hair">Hair</option>
+              </select>
+            </label>
+
+            <label>
+              Süre (dakika)
+              <input type="number" id="service-duration" min="0" step="5" placeholder="30" required />
+            </label>
+
+            <label>
+              Fiyat
+              <input type="text" id="service-price" placeholder="$30" required />
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" id="save-btn" class="approve-btn">Hizmet Ekle</button>
+              <button type="button" id="reset-btn" class="secondary-btn">Yeni Hizmet</button>
+              <button type="button" id="delete-btn" class="reject-btn" hidden>Hizmeti Sil</button>
+            </div>
+            <p id="form-status" class="status"></p>
+          </form>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="hizmetler.js"></script>
+</body>
+</html>
