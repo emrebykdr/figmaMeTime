@@ -64,7 +64,10 @@ class BookingService {
     });
   }
 
-  /// Belirli bir uzman ve tarih için zaten onaylanmış (upcoming) saatleri döner.
+  /// Belirli bir uzman ve tarih için dolu sayılan saatleri döner: hem onay
+  /// bekleyen (waiting) hem de onaylanmış (upcoming) randevular dahildir.
+  /// Böylece aynı uzman/saat için birden fazla waiting kaydı oluşup admin
+  /// tarafında çakışma yaratılması, kaynağında (booking ekranında) engellenir.
   /// Randevu alma ekranında bu saatler seçilemez hale getirilir.
   Future<Set<String>> getBookedTimes({
     required String professional,
@@ -72,7 +75,7 @@ class BookingService {
   }) async {
     final snapshot = await _firestore
         .collection('bookings')
-        .where('status', isEqualTo: 'upcoming')
+        .where('status', whereIn: ['waiting', 'upcoming'])
         .where('professional', isEqualTo: professional)
         .where('date', isEqualTo: date)
         .get();

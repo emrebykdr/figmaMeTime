@@ -7,20 +7,28 @@ import 'package:figmaap/pages/home_page.dart';
 import 'package:figmaap/pages/main_page.dart';
 import 'package:figmaap/services/user_service.dart';
 
+// Uygulamanın giriş noktası. Flutter her platformda (mobil/web) burayı çalıştırır.
 void main() async {
+  // Firebase gibi native servisleri kullanmadan önce Flutter'ın hazır olmasını garanti eder.
   WidgetsFlutterBinding.ensureInitialized();
+  // Firebase'i (Firestore, Auth vs. için) başlatır. firebase_options.dart platforma göre ayarları verir.
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Cihazda daha önce kaydedilmiş bir oturum var mı diye bakar (SharedPreferences üzerinden).
   final loggedIn = await UserService.isLoggedIn();
   if (loggedIn) {
+    // Varsa kullanıcı bilgilerini (id, telefon, isim) statik alanlara yükler.
     await UserService.loadSession();
   }
 
+  // Uygulamayı başlatır ve giriş durumunu MyApp'e parametre olarak geçer.
   runApp(MyApp(isLoggedIn: loggedIn));
 }
 
+// Uygulamanın kök widget'ı: tema, responsive ayarları ve hangi sayfanın
+// açılacağını (home) burada belirliyoruz.
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
 
@@ -34,9 +42,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFDCCC5)),
       ),
+      // Tüm sayfaları saran ortak wrapper. Ekran boyutuna göre ölçeklendirme
+      // (ResponsiveLayout) ve web'de üstteki boşluğu (tarayıcı çubuğu vb.) düzeltme burada yapılır.
       builder: (context, child) {
         Widget result = child!;
         if (kIsWeb) {
+          // Web'de tarayıcı kendi üst boşluğunu eklemediği için manuel bir
+          // padding ekleyip tasarımın mobildeki gibi görünmesini sağlıyoruz.
           result = MediaQuery(
             data: MediaQuery.of(context).copyWith(
               padding: MediaQuery.of(context).padding.copyWith(top: 41.42),
@@ -46,6 +58,9 @@ class MyApp extends StatelessWidget {
         }
         return ResponsiveLayout(child: result);
       },
+      // Açılış sayfası: giriş yapılmışsa MainPage, yapılmamışsa HomePage (login/sign up).
+      // Admin paneli artık bu Flutter projesinin parçası değil, ayrı bir
+      // HTML/CSS/JS web projesi olarak çalışacak.
       home: isLoggedIn ? const MainPage() : const HomePage(),
     );
   }
