@@ -221,6 +221,12 @@ body {
   padding: 20px;
 }
 
+/* Kullanıcı detayı gibi tek sayfada birden fazla kart olduğunda aralarına boşluk. */
+.content > .card + .card,
+.content > a + .card {
+  margin-top: 20px;
+}
+
 .card-header {
   display: flex;
   align-items: baseline;
@@ -306,6 +312,40 @@ body {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* Tablo altı sayfalama */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--tertiary);
+}
+
+.pagination-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+  cursor: pointer;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--page-bg);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Takvim: uzman/tarih için saat müsaitlik grid'i */
@@ -428,12 +468,15 @@ body {
 }
 
 .secondary-btn {
+  display: inline-block;
   background: none;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 14px;
   font-weight: 600;
+  font-size: 14px;
   color: var(--secondary);
+  text-decoration: none;
   cursor: pointer;
 }
 

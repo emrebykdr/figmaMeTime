@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kullanıcı Detayı - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <a class="secondary-btn" href="kullanicilar.html">&larr; Kullanıcılara dön</a>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Kullanıcı Bilgileri</h2>
+            <span id="restrict-status-badge" class="status-badge"></span>
+            <span id="block-status-badge" class="status-badge"></span>
+          </div>
+
+          <form id="user-form" class="booking-form">
+            <label>
+              Ad Soyad
+              <input type="text" id="edit-fullname" required />
+            </label>
+
+            <label>
+              Telefon
+              <input type="text" id="edit-phone" required />
+            </label>
+
+            <label>
+              Email
+              <input type="text" id="edit-email" disabled />
+            </label>
+
+            <label>
+              Kayıt Tarihi
+              <input type="text" id="edit-created" disabled />
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="approve-btn">Kaydet</button>
+              <button type="button" id="restrict-btn" class="reject-btn">Randevuları Kısıtla</button>
+              <button type="button" id="block-btn" class="reject-btn">Hesabı Engelle</button>
+            </div>
+            <p id="user-form-status" class="status"></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Gelecek Randevular</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Salon</th>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="upcoming-body">
+              <!-- kullanici-detay.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Geçmiş Randevular</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Salon</th>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="past-body">
+              <!-- kullanici-detay.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="kullanici-detay.js"></script>
+</body>
+</html>

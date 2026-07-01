@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kullanıcılar - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <h1 class="page-title">Kullanıcılar</h1>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Kayıtlı Kullanıcılar</h2>
+            <input
+              type="text"
+              id="user-search"
+              class="status-filter"
+              placeholder="İsim, telefon veya email ile ara..."
+              autocomplete="off"
+            />
+            <p id="list-status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>Telefon</th>
+                <th>Email</th>
+                <th>Kayıt Tarihi</th>
+                <th>Durum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="users-body">
+              <!-- kullanicilar.js tarafından doldurulur -->
+            </tbody>
+          </table>
+          <div class="pagination" id="users-pagination"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="kullanicilar.js"></script>
+</body>
+</html>

@@ -361,15 +361,23 @@ class _NoPreferenceState extends State<NoPreference> {
               ? () async {
                   final dayName = _dayNames[_selectedDate.weekday % 7];
                   final slot = _availableSlots.firstWhere((s) => s['time'] == _selectedTime);
-                  await BookingService().addBooking(
-                    salon: 'The Gallery Salon',
-                    professional: slot['with']!,
-                    service: widget.selectedService,
-                    date: '$dayName, ${_selectedDate.day}',
-                    time: _selectedTime!,
-                    price: widget.selectedPrice,
-                    appointmentDate: _selectedDate,
-                  );
+                  try {
+                    await BookingService().addBooking(
+                      salon: 'The Gallery Salon',
+                      professional: slot['with']!,
+                      service: widget.selectedService,
+                      date: '$dayName, ${_selectedDate.day}',
+                      time: _selectedTime!,
+                      price: widget.selectedPrice,
+                      appointmentDate: _selectedDate,
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                    );
+                    return;
+                  }
                   if (!mounted) return;
                   Navigator.push(
                     context,

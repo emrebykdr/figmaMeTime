@@ -44,6 +44,7 @@
               <!-- randevular.js tarafından doldurulur -->
             </tbody>
           </table>
+          <div class="pagination" id="queue-pagination"></div>
         </section>
 
         <section class="card tab-panel" data-panel="all" hidden>
@@ -76,6 +77,7 @@
               <!-- randevular.js tarafından doldurulur -->
             </tbody>
           </table>
+          <div class="pagination" id="all-pagination"></div>
         </section>
 
         <section class="card tab-panel" data-panel="calendar" hidden>
@@ -146,6 +148,9 @@
               <select id="new-status">
                 <option value="upcoming">Onaylı</option>
                 <option value="waiting">Bekleyen</option>
+                <option value="past">Geçmiş</option>
+                <option value="cancelled">İptal Edildi</option>
+                <option value="no-show">Gelmedi</option>
               </select>
             </label>
 

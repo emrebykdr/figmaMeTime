@@ -401,15 +401,23 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
           onPressed: _selectedTime != null
               ? () async {
                   final dayName = _dayNames[_selectedDate.weekday % 7];
-                  await BookingService().addBooking(
-                    salon: 'The Gallery Salon',
-                    professional: widget.name,
-                    service: widget.selectedService,
-                    date: '$dayName, ${_selectedDate.day}',
-                    time: _selectedTime!,
-                    price: widget.selectedPrice,
-                    appointmentDate: _selectedDate,
-                  );
+                  try {
+                    await BookingService().addBooking(
+                      salon: 'The Gallery Salon',
+                      professional: widget.name,
+                      service: widget.selectedService,
+                      date: '$dayName, ${_selectedDate.day}',
+                      time: _selectedTime!,
+                      price: widget.selectedPrice,
+                      appointmentDate: _selectedDate,
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                    );
+                    return;
+                  }
                   if (!mounted) return;
                   Navigator.push(
                     context,

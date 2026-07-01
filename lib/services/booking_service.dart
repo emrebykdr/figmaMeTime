@@ -17,6 +17,15 @@ class BookingService {
     required String price,
     required DateTime appointmentDate,
   }) async {
+    // Admin panelinden "Randevuları Kısıtla" ile işaretlenmiş hesaplar
+    // (users/{id}.bookingRestricted == true) yeni randevu oluşturamaz.
+    if (_currentUserId != null) {
+      final userDoc = await _firestore.collection('users').doc(_currentUserId).get();
+      if (userDoc.data()?['bookingRestricted'] == true) {
+        throw Exception('Hesabınız randevu almaya kapatılmıştır. Lütfen salon ile iletişime geçin.');
+      }
+    }
+
     //bookingid kaydediliyor .
     final docRef = _firestore.collection('bookings').doc();
     await docRef.set({

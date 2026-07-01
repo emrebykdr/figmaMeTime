@@ -7,7 +7,7 @@
 const NAV_ITEMS = [
   { key: "dashboard", href: "index.html", label: "Dashboard" },
   { key: "randevular", href: "randevular.html", label: "Randevular" },
-  { key: "kullanicilar", href: "#", label: "Kullanıcılar" },
+  { key: "kullanicilar", href: "kullanicilar.html", label: "Kullanıcılar" },
   { key: "uzmanlar", href: "#", label: "Uzmanlar" },
   { key: "hizmetler", href: "#", label: "Hizmetler" },
   { key: "salon", href: "#", label: "Salon Bilgileri" },

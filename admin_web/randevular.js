@@ -1,5 +1,6 @@
 import { db } from "./shared/firebase.js";
 import { mountSidebar, mountTopbar } from "./shared/layout.js";
+import { PAGE_SIZE, renderPagination } from "./shared/pagination.js";
 import {
   collection,
   query,
@@ -40,23 +41,33 @@ tabButtons.forEach((btn) => {
 // --- Onay Kuyruğu: status == 'waiting' olan randevuları listele, onayla ---
 const statusEl = document.getElementById("status");
 const bodyEl = document.getElementById("bookings-body");
+const queuePaginationEl = document.getElementById("queue-pagination");
+let queueBookings = [];
+let queuePage = 1;
 
 async function loadQueue() {
   statusEl.textContent = "Yükleniyor...";
-  bodyEl.innerHTML = "";
 
   const q = query(collection(db, "bookings"), where("status", "==", "waiting"));
   const snapshot = await getDocs(q);
+  queueBookings = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  queuePage = 1;
+  renderQueuePage();
+}
 
-  if (snapshot.empty) {
+function renderQueuePage() {
+  bodyEl.innerHTML = "";
+
+  if (queueBookings.length === 0) {
     statusEl.textContent = "Bekleyen randevu yok.";
+    queuePaginationEl.innerHTML = "";
     return;
   }
 
-  statusEl.textContent = `${snapshot.size} bekleyen randevu.`;
+  statusEl.textContent = `${queueBookings.length} bekleyen randevu.`;
 
-  snapshot.forEach((docSnap) => {
-    const booking = docSnap.data();
+  const start = (queuePage - 1) * PAGE_SIZE;
+  queueBookings.slice(start, start + PAGE_SIZE).forEach((booking) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${booking.salon ?? ""}</td>
@@ -75,17 +86,22 @@ async function loadQueue() {
     approveBtn.addEventListener("click", () => {
       approveBtn.disabled = true;
       approveBtn.textContent = "Onaylanıyor...";
-      updateBookingStatus(docSnap.id, "upcoming");
+      updateBookingStatus(booking.id, "upcoming");
     });
 
     const rejectBtn = row.querySelector(".reject-btn");
     rejectBtn.addEventListener("click", () => {
       rejectBtn.disabled = true;
       rejectBtn.textContent = "Reddediliyor...";
-      updateBookingStatus(docSnap.id, "cancelled");
+      updateBookingStatus(booking.id, "cancelled");
     });
 
     bodyEl.appendChild(row);
+  });
+
+  renderPagination(queuePaginationEl, queuePage, queueBookings.length, PAGE_SIZE, (newPage) => {
+    queuePage = newPage;
+    renderQueuePage();
   });
 }
 
@@ -104,7 +120,10 @@ loadQueue();
 const allStatusFilterEl = document.getElementById("all-status-filter");
 const allStatusEl = document.getElementById("all-status");
 const allBodyEl = document.getElementById("all-bookings-body");
+const allPaginationEl = document.getElementById("all-pagination");
 let allBookingsLoaded = false;
+let allBookingsData = [];
+let allPage = 1;
 
 const STATUS_LABELS = {
   waiting: "Bekleyen",
@@ -117,7 +136,6 @@ const STATUS_LABELS = {
 async function loadAllBookings() {
   const statusFilter = allStatusFilterEl.value;
   allStatusEl.textContent = "Yükleniyor...";
-  allBodyEl.innerHTML = "";
 
   const bookingsRef = collection(db, "bookings");
   const q =
@@ -126,17 +144,25 @@ async function loadAllBookings() {
       : query(bookingsRef, where("status", "==", statusFilter));
   const snapshot = await getDocs(q);
 
-  if (snapshot.empty) {
+  allBookingsData = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  allBookingsData.sort((a, b) => a.dateIso.localeCompare(b.dateIso));
+  allPage = 1;
+  renderAllBookingsPage();
+}
+
+function renderAllBookingsPage() {
+  allBodyEl.innerHTML = "";
+
+  if (allBookingsData.length === 0) {
     allStatusEl.textContent = "Kayıt yok.";
+    allPaginationEl.innerHTML = "";
     return;
   }
 
-  const bookings = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
-  bookings.sort((a, b) => a.dateIso.localeCompare(b.dateIso));
+  allStatusEl.textContent = `${allBookingsData.length} randevu.`;
 
-  allStatusEl.textContent = `${bookings.length} randevu.`;
-
-  bookings.forEach((booking) => {
+  const start = (allPage - 1) * PAGE_SIZE;
+  allBookingsData.slice(start, start + PAGE_SIZE).forEach((booking) => {
     const row = document.createElement("tr");
     const statusLabel = STATUS_LABELS[booking.status] ?? booking.status ?? "";
     // Sadece hâlâ aktif (bekleyen/onaylı) randevular iptal/gelmedi olarak işaretlenebilir.
@@ -169,6 +195,11 @@ async function loadAllBookings() {
     }
 
     allBodyEl.appendChild(row);
+  });
+
+  renderPagination(allPaginationEl, allPage, allBookingsData.length, PAGE_SIZE, (newPage) => {
+    allPage = newPage;
+    renderAllBookingsPage();
   });
 }
 
@@ -343,7 +374,7 @@ function startEdit(booking) {
   newServiceEl.value = booking.service ?? newServiceEl.value;
   newDateEl.value = booking.dateIso;
   newTimeEl.value = booking.time ?? newTimeEl.value;
-  newStatusEl.value = booking.status === "waiting" ? "waiting" : "upcoming";
+  newStatusEl.value = booking.status ?? "upcoming";
   newFormTitleEl.textContent = "Randevuyu Düzenle";
   newSubmitBtnEl.textContent = "Güncelle";
   newCancelBtnEl.hidden = false;

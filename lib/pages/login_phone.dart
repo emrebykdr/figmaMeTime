@@ -243,6 +243,16 @@ class _LoginPhoneState extends State<LoginPhone> {
                     });
                     return;
                   }
+                  // Admin panelinden "Hesabı Engelle" ile işaretlenmiş
+                  // (users/{id}.accountBlocked == true) kullanıcılar giriş yapamaz.
+                  final userData = await UserService().getUserByPhone(phone);
+                  if (!mounted) return;
+                  if (userData?['accountBlocked'] == true) {
+                    setState(() {
+                      _errorText = 'This account has been blocked. Please contact the salon.';
+                    });
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
