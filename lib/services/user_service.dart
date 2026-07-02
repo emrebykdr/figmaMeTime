@@ -80,6 +80,22 @@ class UserService {
     return null;
   }
 
+  /// login_phone.dart artık telefon yerine email ile giriş yaptırıyor
+  /// (giriş kodu Gmail üzerinden gönderildiği için). Hesabın alttaki
+  /// kimliği hâlâ telefon numarası olduğundan, bulunan kullanıcının
+  /// 'phone' alanı LoginPhoneCode'a aktarılmaya devam ediyor.
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.data();
+    }
+    return null;
+  }
+
   /// getUserByPhone'un canlı (stream) hali: admin panelinden kullanıcı
   /// verisi (ör. loginCode) değiştiğinde, ekran yeniden açılmadan anında
   /// günceli yayınlar. login_phone_code.dart'ta kod ekranı açıkken admin
@@ -91,6 +107,20 @@ class UserService {
         .limit(1)
         .snapshots()
         .map((snapshot) => snapshot.docs.isNotEmpty ? snapshot.docs.first.data() : null);
+  }
+
+  /// Oturum açıkken (uygulama önden çalışırken) admin, kullanıcının hesabını
+  /// engellerse bunu anında yakalamak için kullanılıyor. main.dart'taki
+  /// açılış kontrolü sadece uygulama yeniden başladığında çalışıyordu; bu
+  /// stream, uygulama açık kaldığı sürece de canlı dinleme sağlıyor.
+  Stream<bool> watchAccountBlocked() {
+    final userId = currentUserId;
+    if (userId == null) return Stream.value(false);
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((snapshot) => snapshot.data()?['accountBlocked'] == true);
   }
 
   /// userId sabit olduğu için telefon değişse bile doğru kullanıcıyı bulur.

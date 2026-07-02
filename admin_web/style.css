@@ -522,6 +522,12 @@ body {
   flex: 1;
 }
 
+.code-timer {
+  font-size: 13px;
+  color: var(--tertiary);
+  white-space: nowrap;
+}
+
 .photo-preview {
   width: 56px;
   height: 56px;

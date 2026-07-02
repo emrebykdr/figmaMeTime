@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +9,7 @@ import 'package:figmaap/services/booking_service.dart';
 import 'package:figmaap/pages/bookings_page.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
 import 'package:figmaap/pages/salon_page.dart';
+import 'package:figmaap/pages/home_page.dart';
 import 'package:figmaap/services/user_service.dart';
 
 class MainPage extends StatefulWidget {
@@ -51,10 +53,29 @@ class _MainPageState extends State<MainPage> {
     },
   ];
 
+  StreamSubscription<bool>? _blockedSub;
+
   @override
   void initState() {
     super.initState();
     _loadUserName();
+    _listenForAccountBlocked();
+  }
+
+  // Admin panelden hesap engellendiğinde, uygulama açıkken bile anında
+  // oturumu kapatıp giriş ekranına döner (main.dart'taki kontrol sadece
+  // uygulama yeniden başladığında çalışıyor, bu ek olarak canlı dinliyor).
+  void _listenForAccountBlocked() {
+    _blockedSub = UserService().watchAccountBlocked().listen((blocked) async {
+      if (!blocked) return;
+      await UserService.logout();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
+      );
+    });
   }
 
   Future<void> _loadUserName() async {
@@ -82,6 +103,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _blockedSub?.cancel();
     super.dispose();
   }
 

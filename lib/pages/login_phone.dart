@@ -29,42 +29,76 @@ class LoginPhone extends StatefulWidget {
 }
 
 class _LoginPhoneState extends State<LoginPhone> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
-  final List<Map<String, String>> _countries = [
-    {'name': 'Brazil', 'code': '+55', 'flag': '🇧🇷'},
-    {'name': 'Turkey', 'code': '+90', 'flag': '🇹🇷'},
-    {'name': 'United States', 'code': '+1', 'flag': '🇺🇸'},
-    {'name': 'United Kingdom', 'code': '+44', 'flag': '🇬🇧'},
-    {'name': 'Germany', 'code': '+49', 'flag': '🇩🇪'},
-    {'name': 'France', 'code': '+33', 'flag': '🇫🇷'},
-  ];
-
-  late Map<String, String> _selectedCountry;
-
-  bool _isPhoneValid = false;
+  bool _isEmailValid = false;
+  bool _isChecking = false;
   String? _errorText;
 
   @override
   void initState() {
     super.initState();
-    _selectedCountry = _countries[0];
-    _phoneController.addListener(_onPhoneChanged);
+    _emailController.addListener(_onEmailChanged);
   }
 
-  void _onPhoneChanged() {
-    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+  void _onEmailChanged() {
     setState(() {
-      _isPhoneValid = digits.length >= 7;
+      _isEmailValid = _emailRegex.hasMatch(_emailController.text.trim());
       _errorText = null;
     });
   }
 
   @override
   void dispose() {
-    _phoneController.removeListener(_onPhoneChanged);
-    _phoneController.dispose();
+    _emailController.removeListener(_onEmailChanged);
+    _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onContinue() async {
+    final email = _emailController.text.trim();
+    setState(() {
+      _isChecking = true;
+    });
+
+    final userData = await UserService().getUserByEmail(email);
+    if (!mounted) return;
+
+    if (userData == null) {
+      setState(() {
+        _isChecking = false;
+        _errorText = 'No account found with this email';
+      });
+      return;
+    }
+
+    if (userData['accountBlocked'] == true) {
+      setState(() {
+        _isChecking = false;
+        _errorText = 'This account has been blocked. Please contact the salon.';
+      });
+      return;
+    }
+
+    final phone = userData['phone'] as String?;
+    setState(() {
+      _isChecking = false;
+    });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoginPhoneCode(
+          phoneNumber: phone ?? '',
+          professional: widget.professional,
+          noPreference: widget.noPreference,
+          selectedService: widget.selectedService,
+          selectedPrice: widget.selectedPrice,
+          skipToMain: widget.skipToMain,
+        ),
+      ),
+    );
   }
 
   @override
@@ -86,11 +120,12 @@ class _LoginPhoneState extends State<LoginPhone> {
               SizedBox(height: r.h(10)),
               _buildSubtitle(r),
               SizedBox(height: r.h(35)),
-              _buildDivider(),
-              _buildCountrySelector(r),
-              _buildDivider(),
-              _buildPhoneInput(r),
-              _buildDivider(),
+              AppTextField(
+                label: 'Email',
+                hint: 'Enter your registered email',
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+              ),
               if (_errorText != null) ...[
                 SizedBox(height: r.h(8)),
                 Text(
@@ -151,7 +186,8 @@ class _LoginPhoneState extends State<LoginPhone> {
 
   Widget _buildSubtitle(Responsive r) {
     return Text(
-      'Please confirm your country code and\nenter your phone number.',
+      'Please enter the email address linked to\nyour account. '
+      "We'll send your login code there.",
       style: TextStyle(fontFamily: 'Raleway',
         fontWeight: FontWeight.w500,
         fontSize: r.sp(16),
@@ -161,113 +197,13 @@ class _LoginPhoneState extends State<LoginPhone> {
     );
   }
 
-  Widget _buildCountrySelector(Responsive r) {
-    return GestureDetector(
-      onTap: () => _showCountryPicker(r),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: r.h(16)),
-        child: Row(
-          children: [
-            Text(
-              _selectedCountry['flag']!,
-              style: TextStyle(fontSize: r.sp(24)),
-            ),
-            SizedBox(width: r.w(12)),
-            Text(
-              _selectedCountry['name']!,
-              style: TextStyle(fontFamily: 'Raleway',
-                fontWeight: FontWeight.w500,
-                fontSize: r.sp(16),
-                color: AppColors.almostBlack,
-              ),
-            ),
-            const Spacer(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhoneInput(Responsive r) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: r.h(16)),
-      child: Row(
-        children: [
-          Text(
-            _selectedCountry['code']!,
-            style: TextStyle(fontFamily: 'Raleway',
-              fontWeight: FontWeight.w500,
-              fontSize: r.sp(16),
-              color: AppColors.almostBlack,
-            ),
-          ),
-          SizedBox(width: r.w(12)),
-          Container(
-            width: 1,
-            height: r.h(24),
-            color: AppColors.tertiary.withValues(alpha: 0.3),
-          ),
-          SizedBox(width: r.w(12)),
-          Expanded(
-            child: PhoneTextField(
-              controller: _phoneController,
-              countryCode: _selectedCountry['code']!,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      color: AppColors.tertiary.withValues(alpha: 0.2),
-      height: 1,
-    );
-  }
-
   Widget _buildContinueButton(Responsive r) {
     return Center(
       child: SizedBox(
         width: r.w(293),
         height: r.h(54),
         child: ElevatedButton(
-          onPressed: _isPhoneValid
-              ? () async {
-                  final phone = '${_selectedCountry['code']} ${_phoneController.text}';
-                  final exists = await UserService().phoneExists(phone);
-                  if (!mounted) return;
-                  if (!exists) {
-                    setState(() {
-                      _errorText = 'No account found with this phone number';
-                    });
-                    return;
-                  }
-                  // Admin panelinden "Hesabı Engelle" ile işaretlenmiş
-                  // (users/{id}.accountBlocked == true) kullanıcılar giriş yapamaz.
-                  final userData = await UserService().getUserByPhone(phone);
-                  if (!mounted) return;
-                  if (userData?['accountBlocked'] == true) {
-                    setState(() {
-                      _errorText = 'This account has been blocked. Please contact the salon.';
-                    });
-                    return;
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LoginPhoneCode(
-                        phoneNumber: phone,
-                        professional: widget.professional,
-                        noPreference: widget.noPreference,
-                        selectedService: widget.selectedService,
-                        selectedPrice: widget.selectedPrice,
-                        isSignUp: widget.skipToMain,
-                      ),
-                    ),
-                  );
-                }
-              : null,
+          onPressed: _isEmailValid && !_isChecking ? _onContinue : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
@@ -286,46 +222,6 @@ class _LoginPhoneState extends State<LoginPhone> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showCountryPicker(Responsive r) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(r.r(16))),
-      ),
-      builder: (_) {
-        return ListView.builder(
-          shrinkWrap: true,
-          itemCount: _countries.length,
-          itemBuilder: (context, index) {
-            final country = _countries[index];
-            return ListTile(
-              leading: Text(
-                country['flag']!,
-                style: TextStyle(fontSize: r.sp(24)),
-              ),
-              title: Text(
-                '${country['name']} (${country['code']})',
-                style: TextStyle(fontFamily: 'Raleway',
-                  fontWeight: FontWeight.w500,
-                  fontSize: r.sp(16),
-                  color: AppColors.almostBlack,
-                ),
-              ),
-              onTap: () {
-                setState(() {
-                  _selectedCountry = country;
-                  _phoneController.clear();
-                });
-                Navigator.pop(context);
-              },
-            );
-          },
-        );
-      },
     );
   }
 }

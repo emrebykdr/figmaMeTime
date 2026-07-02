@@ -15,6 +15,11 @@ class LoginPhoneCode extends StatefulWidget {
   final Map<String, dynamic>? professional;
   final bool noPreference;
   final bool isSignUp;
+  // Kod doğrulandıktan sonra doğrudan MainPage'e gidilsin mi (booking akışı
+  // seçimini atla). isSignUp'tan bağımsız: gerçek hesabı olan bir kullanıcı
+  // "Skip" ile buraya gelebilir, bu durumda demo kod değil kendi gerçek
+  // (email'e gönderilen) kodunu girmesi gerekir, sadece varış sayfası değişir.
+  final bool skipToMain;
   final String selectedService;
   final String selectedPrice;
 
@@ -24,6 +29,7 @@ class LoginPhoneCode extends StatefulWidget {
     this.professional,
     this.noPreference = false,
     this.isSignUp = false,
+    this.skipToMain = false,
     this.selectedService = 'Basic Manicure',
     this.selectedPrice = '\$30',
   });
@@ -33,14 +39,17 @@ class LoginPhoneCode extends StatefulWidget {
 }
 
 class _LoginPhoneCodeState extends State<LoginPhoneCode> {
-  final List<TextEditingController> _controllers =
-      List.generate(5, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    5,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
 
   late Timer _timer;
   int _remainingSeconds = 20;
 
   String? _expectedCode;
+  String? _userEmail;
   String? _errorText;
   StreamSubscription<Map<String, dynamic>?>? _userSub;
 
@@ -51,15 +60,19 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     _listenForExpectedCode();
   }
 
-  // Admin panelinden (kullanici-detay.html -> "Kod Oluştur") üretilen kod,
-  // users/{id}.loginCode alanında tutuluyor. Tek seferlik sorgu yerine canlı
-  // dinleniyor: kullanıcı bu ekrandayken admin kodu yeniden oluşturursa,
-  // ekran yeniden açılmadan _expectedCode anında güncellenir.
+  // Admin panelinden (kullanici-detay.html -> "Kod Oluştur") üretilen kod
+  // artık kullanıcının email adresine gönderiliyor (Gmail API), SMS değil.
+  // Tek seferlik sorgu yerine canlı dinleniyor: kullanıcı bu ekrandayken
+  // admin kodu yeniden oluşturursa, ekran yeniden açılmadan _expectedCode
+  // anında güncellenir.
   void _listenForExpectedCode() {
-    _userSub = UserService().watchUserByPhone(widget.phoneNumber).listen((userData) {
+    _userSub = UserService().watchUserByPhone(widget.phoneNumber).listen((
+      userData,
+    ) {
       if (!mounted) return;
       setState(() {
         _expectedCode = userData?['loginCode'] as String?;
+        _userEmail = userData?['email'] as String?;
       });
     });
   }
@@ -132,7 +145,7 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
 
     await UserService().loginUser(phone: widget.phoneNumber);
     if (!mounted) return;
-    if (widget.isSignUp) {
+    if (widget.isSignUp || widget.skipToMain) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainPage()),
@@ -141,10 +154,12 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     } else if (widget.noPreference) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => NoPreference(
-          selectedService: widget.selectedService,
-          selectedPrice: widget.selectedPrice,
-        )),
+        MaterialPageRoute(
+          builder: (_) => NoPreference(
+            selectedService: widget.selectedService,
+            selectedPrice: widget.selectedPrice,
+          ),
+        ),
       );
     } else {
       final pro = widget.professional;
@@ -243,6 +258,21 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   }
 
   Widget _buildSubtitle(Responsive r) {
+    // Kayıt akışında (isSignUp) henüz gönderilen gerçek bir kod yok (bkz.
+    // _checkCode'daki demo kod notu), bu yüzden farklı bir metin gösteriliyor.
+    if (widget.isSignUp) {
+      return Text(
+        'Enter the demo code below to complete your registration.',
+        style: TextStyle(
+          fontFamily: 'Raleway',
+          fontWeight: FontWeight.w500,
+          fontSize: r.sp(16),
+          height: 1.25,
+          color: AppColors.tertiary,
+        ),
+      );
+    }
+
     return RichText(
       text: TextSpan(
         style: TextStyle(
@@ -253,11 +283,9 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
           color: AppColors.tertiary,
         ),
         children: [
-          const TextSpan(
-            text: "We've sent an SMS with an activation code\nto your phone ",
-          ),
+          const TextSpan(text: "We've sent your login code by email to\n"),
           TextSpan(
-            text: widget.phoneNumber,
+            text: _userEmail ?? 'your registered email',
             style: const TextStyle(
               fontWeight: FontWeight.w500,
               color: AppColors.almostBlack,
