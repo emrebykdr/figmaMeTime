@@ -102,7 +102,12 @@ class BookingService {
     return snapshot.docs.map((doc) => doc.data()['time'] as String).toSet();
   }
 
+  /// Randevuyu siler yerine 'cancelled' statüsüne çeker (admin panelindeki
+  /// iptal işlemleriyle aynı davranış) — böylece müşteri kendi randevusunu
+  /// iptal ettiğinde kayıt admin'in geçmişinde/istatistiklerinde kaybolmaz.
   Future<void> cancelBooking(String bookingId) async {
-    await _firestore.collection('bookings').doc(bookingId).delete();
+    await _firestore.collection('bookings').doc(bookingId).update({
+      'status': 'cancelled',
+    });
   }
 }

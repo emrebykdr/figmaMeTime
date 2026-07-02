@@ -7,6 +7,7 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/app_card.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
+import 'package:figmaap/widgets/error_retry.dart';
 import 'package:figmaap/pages/professionals_calendar.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/services/professional_service.dart';
@@ -33,6 +34,7 @@ class _OnboardingChooseProfessionalState
   int? _selectedIndex;
   List<Map<String, dynamic>> _professionals = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -41,12 +43,24 @@ class _OnboardingChooseProfessionalState
   }
 
   Future<void> _loadProfessionals() async {
-    final professionals = await ProfessionalService().getProfessionals();
-    if (!mounted) return;
     setState(() {
-      _professionals = professionals;
-      _loading = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final professionals = await ProfessionalService().getProfessionals();
+      if (!mounted) return;
+      setState(() {
+        _professionals = professionals;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load professionals.';
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -68,58 +82,73 @@ class _OnboardingChooseProfessionalState
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? ErrorRetryView(
+                      message: _error!,
+                      onRetry: _loadProfessionals,
+                    )
                   : _professionals.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No professionals available yet.',
-                            style: TextStyle(
-                              fontFamily: 'Raleway',
-                              fontWeight: FontWeight.w500,
-                              fontSize: r.sp(14),
-                              color: AppColors.tertiary,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: _professionals.length,
-                          itemBuilder: (context, index) {
-                            final pro = _professionals[index];
-                            final rating = (pro['rating'] as num?)?.toDouble() ?? 5.0;
-                            return ProfessionalCard(
-                              imagePath: pro['photoUrl'] as String? ?? '',
-                              name: pro['name'] as String? ?? '',
-                              role: pro['role'] as String? ?? '',
-                              rating: rating,
-                              isSelected: _selectedIndex == index,
-                              onTap: () {
-                                setState(() {
-                                  _selectedIndex = index;
-                                });
-                                if (widget.isLoggedIn) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ProfessionalsCalendar(
-                                        name: pro['name'] as String? ?? '',
-                                        role: pro['role'] as String? ?? '',
-                                        rating: rating,
-                                        imagePath: pro['photoUrl'] as String? ?? '',
-                                        selectedService: widget.selectedService,
-                                        selectedPrice: widget.selectedPrice,
-                                        workingHours:
-                                            pro['workingHours'] as Map<String, dynamic>? ?? {},
-                                        daysOff:
-                                            (pro['daysOff'] as List?)?.cast<String>() ?? [],
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  LoginSheet.show(context, professional: pro, selectedService: widget.selectedService, selectedPrice: widget.selectedPrice);
-                                }
-                              },
-                            );
-                          },
+                  ? Center(
+                      child: Text(
+                        'No professionals available yet.',
+                        style: TextStyle(
+                          fontFamily: 'Raleway',
+                          fontWeight: FontWeight.w500,
+                          fontSize: r.sp(14),
+                          color: AppColors.tertiary,
                         ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _professionals.length,
+                      itemBuilder: (context, index) {
+                        final pro = _professionals[index];
+                        final rating =
+                            (pro['rating'] as num?)?.toDouble() ?? 5.0;
+                        return ProfessionalCard(
+                          imagePath: pro['photoUrl'] as String? ?? '',
+                          name: pro['name'] as String? ?? '',
+                          role: pro['role'] as String? ?? '',
+                          rating: rating,
+                          isSelected: _selectedIndex == index,
+                          onTap: () {
+                            setState(() {
+                              _selectedIndex = index;
+                            });
+                            if (widget.isLoggedIn) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProfessionalsCalendar(
+                                    name: pro['name'] as String? ?? '',
+                                    role: pro['role'] as String? ?? '',
+                                    rating: rating,
+                                    imagePath: pro['photoUrl'] as String? ?? '',
+                                    selectedService: widget.selectedService,
+                                    selectedPrice: widget.selectedPrice,
+                                    workingHours:
+                                        pro['workingHours']
+                                            as Map<String, dynamic>? ??
+                                        {},
+                                    daysOff:
+                                        (pro['daysOff'] as List?)
+                                            ?.cast<String>() ??
+                                        [],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              LoginSheet.show(
+                                context,
+                                professional: pro,
+                                selectedService: widget.selectedService,
+                                selectedPrice: widget.selectedPrice,
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
             ),
             _buildNoPreference(r),
             SizedBox(height: r.h(40)),
@@ -176,10 +205,12 @@ class _OnboardingChooseProfessionalState
         if (widget.isLoggedIn) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => NoPreference(
-              selectedService: widget.selectedService,
-              selectedPrice: widget.selectedPrice,
-            )),
+            MaterialPageRoute(
+              builder: (_) => NoPreference(
+                selectedService: widget.selectedService,
+                selectedPrice: widget.selectedPrice,
+              ),
+            ),
           );
         } else {
           LoginSheet.show(context, noPreference: true);

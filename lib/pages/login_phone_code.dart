@@ -110,7 +110,16 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     final code = _controllers.map((c) => c.text).join();
     if (code.length != 5) return;
 
-    if (_expectedCode == null || code != _expectedCode) {
+    // Yeni kayıt olan kullanıcının henüz admin tarafından üretilmiş bir
+    // loginCode'u yoktur (admin panelinde "Kod Oluştur" sadece mevcut bir
+    // kullanıcı üzerinde çalışır). Kayıt akışını tıkamamak için bu durumda
+    // sabit demo kodu (12345) kabul edilir; normal girişte (isSignUp=false)
+    // hâlâ admin'in ürettiği gerçek kod gerekiyor.
+    final isValid = widget.isSignUp
+        ? code == '12345'
+        : (_expectedCode != null && code == _expectedCode);
+
+    if (!isValid) {
       setState(() {
         _errorText = 'Invalid code';
       });

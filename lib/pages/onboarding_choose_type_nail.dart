@@ -6,6 +6,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/state_dots.dart';
 import 'package:figmaap/widgets/app_card.dart';
+import 'package:figmaap/widgets/error_retry.dart';
 import 'package:figmaap/pages/onboarding_choose_proffesionel.dart';
 import 'package:figmaap/services/service_catalog_service.dart';
 
@@ -23,12 +24,14 @@ class OnboardingChooseTypeNail extends StatefulWidget {
   });
 
   @override
-  State<OnboardingChooseTypeNail> createState() => _OnboardingChooseTypeNailState();
+  State<OnboardingChooseTypeNail> createState() =>
+      _OnboardingChooseTypeNailState();
 }
 
 class _OnboardingChooseTypeNailState extends State<OnboardingChooseTypeNail> {
   List<Map<String, dynamic>> _services = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -37,12 +40,26 @@ class _OnboardingChooseTypeNailState extends State<OnboardingChooseTypeNail> {
   }
 
   Future<void> _loadServices() async {
-    final services = await ServiceCatalogService().getServices(category: widget.category);
-    if (!mounted) return;
     setState(() {
-      _services = services;
-      _loading = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final services = await ServiceCatalogService().getServices(
+        category: widget.category,
+      );
+      if (!mounted) return;
+      setState(() {
+        _services = services;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load services.';
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -64,43 +81,45 @@ class _OnboardingChooseTypeNailState extends State<OnboardingChooseTypeNail> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? ErrorRetryView(message: _error!, onRetry: _loadServices)
                   : _services.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No services available yet.',
-                            style: TextStyle(
-                              fontFamily: 'Raleway',
-                              fontWeight: FontWeight.w500,
-                              fontSize: r.sp(14),
-                              color: AppColors.tertiary,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: _services.length,
-                          itemBuilder: (context, index) {
-                            final service = _services[index];
-                            final title = service['name'] as String? ?? '';
-                            final price = service['price'] as String? ?? '';
-                            return ServiceCard(
-                              imagePath: service['photoUrl'] as String? ?? '',
-                              title: title,
-                              price: price,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => OnboardingChooseProfessional(
-                                      isLoggedIn: widget.isLoggedIn,
-                                      selectedService: title,
-                                      selectedPrice: price,
-                                    ),
-                                  ),
-                                );
-                              },
+                  ? Center(
+                      child: Text(
+                        'No services available yet.',
+                        style: TextStyle(
+                          fontFamily: 'Raleway',
+                          fontWeight: FontWeight.w500,
+                          fontSize: r.sp(14),
+                          color: AppColors.tertiary,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _services.length,
+                      itemBuilder: (context, index) {
+                        final service = _services[index];
+                        final title = service['name'] as String? ?? '';
+                        final price = service['price'] as String? ?? '';
+                        return ServiceCard(
+                          imagePath: service['photoUrl'] as String? ?? '',
+                          title: title,
+                          price: price,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => OnboardingChooseProfessional(
+                                  isLoggedIn: widget.isLoggedIn,
+                                  selectedService: title,
+                                  selectedPrice: price,
+                                ),
+                              ),
                             );
                           },
-                        ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -137,7 +156,8 @@ class _OnboardingChooseTypeNailState extends State<OnboardingChooseTypeNail> {
       child: Text(
         'Now, choose one\nthat fit your needs:',
         textAlign: TextAlign.center,
-        style: TextStyle(fontFamily: 'Raleway',
+        style: TextStyle(
+          fontFamily: 'Raleway',
           fontWeight: FontWeight.w600,
           fontSize: r.sp(24),
           height: 1.36,

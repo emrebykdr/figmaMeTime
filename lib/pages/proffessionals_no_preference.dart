@@ -4,6 +4,7 @@ import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
+import 'package:figmaap/widgets/error_retry.dart';
 import 'package:figmaap/pages/successful_page.dart';
 import 'package:figmaap/services/booking_service.dart';
 import 'package:figmaap/services/professional_service.dart';
@@ -29,17 +30,35 @@ class _NoPreferenceState extends State<NoPreference> {
   Map<String, Set<String>> _bookedByProfessional = {};
 
   final _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
   final _dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   // Admin panelindeki (admin_web/uzmanlar.js) TIME_SLOTS/DAY_ORDER ile aynı.
-  static const _timeSlots = ['10:00 am', '11:00 am', '01:30 pm', '03:00 pm', '05:00 pm', '07:00 pm'];
+  static const _timeSlots = [
+    '10:00 am',
+    '11:00 am',
+    '01:30 pm',
+    '03:00 pm',
+    '05:00 pm',
+    '07:00 pm',
+  ];
   static const _dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   List<Map<String, dynamic>> _professionals = [];
   bool _loadingProfessionals = true;
+  String? _error;
   // Seçili gün için, tüm uzmanların çalışma saatlerinden üretilen liste:
   // [{'time': '10:00 am', 'with': 'Anna Smith'}, ...]. Sabit liste değil.
   List<Map<String, String>> _availableSlots = [];
@@ -64,13 +83,25 @@ class _NoPreferenceState extends State<NoPreference> {
   }
 
   Future<void> _loadProfessionals() async {
-    final professionals = await ProfessionalService().getProfessionals();
-    if (!mounted) return;
     setState(() {
-      _professionals = professionals;
-      _loadingProfessionals = false;
+      _loadingProfessionals = true;
+      _error = null;
     });
-    await _loadBookedSlots();
+    try {
+      final professionals = await ProfessionalService().getProfessionals();
+      if (!mounted) return;
+      setState(() {
+        _professionals = professionals;
+        _loadingProfessionals = false;
+      });
+      await _loadBookedSlots();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load available slots.';
+        _loadingProfessionals = false;
+      });
+    }
   }
 
   Future<void> _loadBookedSlots() async {
@@ -83,40 +114,54 @@ class _NoPreferenceState extends State<NoPreference> {
     final slots = <Map<String, String>>[];
     for (final time in _timeSlots) {
       for (final professional in _professionals) {
-        final daysOff = (professional['daysOff'] as List?)?.cast<String>() ?? [];
+        final daysOff =
+            (professional['daysOff'] as List?)?.cast<String>() ?? [];
         if (daysOff.contains(isoDate)) continue;
-        final workingHours = professional['workingHours'] as Map<String, dynamic>?;
+        final workingHours =
+            professional['workingHours'] as Map<String, dynamic>?;
         final dayTimes = (workingHours?[dayKey] as List?)?.cast<String>() ?? [];
         if (dayTimes.contains(time)) {
-          slots.add({'time': time, 'with': professional['name'] as String? ?? ''});
+          slots.add({
+            'time': time,
+            'with': professional['name'] as String? ?? '',
+          });
         }
       }
     }
 
     final professionalNames = slots.map((s) => s['with']!).toSet();
-    final result = <String, Set<String>>{};
-    for (final professional in professionalNames) {
-      result[professional] = await BookingService().getBookedTimes(
-        professional: professional,
-        date: date,
-      );
-    }
-    if (!mounted) return;
-    setState(() {
-      _availableSlots = slots;
-      _bookedByProfessional = result;
-      if (_selectedTime != null) {
-        final slot = _availableSlots.firstWhere(
-          (s) => s['time'] == _selectedTime,
-          orElse: () => {},
+    try {
+      final result = <String, Set<String>>{};
+      for (final professional in professionalNames) {
+        result[professional] = await BookingService().getBookedTimes(
+          professional: professional,
+          date: date,
         );
-        final withName = slot['with'];
-        if (withName == null ||
-            (_bookedByProfessional[withName]?.contains(_selectedTime) ?? false)) {
-          _selectedTime = null;
-        }
       }
-    });
+      if (!mounted) return;
+      setState(() {
+        _availableSlots = slots;
+        _bookedByProfessional = result;
+        _error = null;
+        if (_selectedTime != null) {
+          final slot = _availableSlots.firstWhere(
+            (s) => s['time'] == _selectedTime,
+            orElse: () => {},
+          );
+          final withName = slot['with'];
+          if (withName == null ||
+              (_bookedByProfessional[withName]?.contains(_selectedTime) ??
+                  false)) {
+            _selectedTime = null;
+          }
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load available slots.';
+      });
+    }
   }
 
   @override
@@ -220,7 +265,9 @@ class _NoPreferenceState extends State<NoPreference> {
           setState(() {
             _selectedDate = picked;
             final now = DateTime.now();
-            _selectedDayIndex = picked.difference(DateTime(now.year, now.month, now.day)).inDays;
+            _selectedDayIndex = picked
+                .difference(DateTime(now.year, now.month, now.day))
+                .inDays;
           });
           _loadBookedSlots();
         }
@@ -247,7 +294,11 @@ class _NoPreferenceState extends State<NoPreference> {
             ),
           ),
           SizedBox(width: r.w(4)),
-          SvgPicture.asset('assets/icons/chevron_right.svg', width: r.w(18), height: r.w(18)),
+          SvgPicture.asset(
+            'assets/icons/chevron_right.svg',
+            width: r.w(18),
+            height: r.w(18),
+          ),
         ],
       ),
     );
@@ -291,7 +342,9 @@ class _NoPreferenceState extends State<NoPreference> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(r.r(10)),
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : const Color(0xFFCDCDCD),
+                  color: isSelected
+                      ? AppColors.primary
+                      : const Color(0xFFCDCDCD),
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
@@ -304,7 +357,9 @@ class _NoPreferenceState extends State<NoPreference> {
                       fontFamily: 'Raleway',
                       fontWeight: FontWeight.w600,
                       fontSize: r.sp(18),
-                      color: isSelected ? AppColors.primary : AppColors.almostBlack,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.almostBlack,
                     ),
                   ),
                   Text(
@@ -313,7 +368,9 @@ class _NoPreferenceState extends State<NoPreference> {
                       fontFamily: 'Raleway',
                       fontWeight: FontWeight.w500,
                       fontSize: r.sp(12),
-                      color: isSelected ? AppColors.primary : AppColors.tertiary,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.tertiary,
                     ),
                   ),
                 ],
@@ -342,6 +399,10 @@ class _NoPreferenceState extends State<NoPreference> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (_error != null) {
+      return ErrorRetryView(message: _error!, onRetry: _loadProfessionals);
+    }
+
     if (_availableSlots.isEmpty) {
       return Text(
         'No available slots for this day.',
@@ -361,7 +422,8 @@ class _NoPreferenceState extends State<NoPreference> {
         final time = slot['time']!;
         final withName = slot['with']!;
         final isSelected = time == _selectedTime;
-        final isBooked = _bookedByProfessional[withName]?.contains(time) ?? false;
+        final isBooked =
+            _bookedByProfessional[withName]?.contains(time) ?? false;
 
         return GestureDetector(
           onTap: isBooked ? null : () => setState(() => _selectedTime = time),
@@ -386,7 +448,9 @@ class _NoPreferenceState extends State<NoPreference> {
                     fontSize: r.sp(14),
                     color: isBooked
                         ? AppColors.tertiary
-                        : (isSelected ? AppColors.primary : AppColors.almostBlack),
+                        : (isSelected
+                              ? AppColors.primary
+                              : AppColors.almostBlack),
                   ),
                 ),
                 SizedBox(height: r.h(2)),
@@ -396,7 +460,9 @@ class _NoPreferenceState extends State<NoPreference> {
                     fontFamily: 'Raleway',
                     fontWeight: FontWeight.w400,
                     fontSize: r.sp(12),
-                    color: isBooked ? AppColors.tertiary : (isSelected ? AppColors.primary : AppColors.tertiary),
+                    color: isBooked
+                        ? AppColors.tertiary
+                        : (isSelected ? AppColors.primary : AppColors.tertiary),
                   ),
                 ),
               ],
@@ -416,7 +482,9 @@ class _NoPreferenceState extends State<NoPreference> {
           onPressed: _selectedTime != null
               ? () async {
                   final dayName = _dayNames[_selectedDate.weekday % 7];
-                  final slot = _availableSlots.firstWhere((s) => s['time'] == _selectedTime);
+                  final slot = _availableSlots.firstWhere(
+                    (s) => s['time'] == _selectedTime,
+                  );
                   try {
                     await BookingService().addBooking(
                       salon: 'The Gallery Salon',
@@ -430,7 +498,11 @@ class _NoPreferenceState extends State<NoPreference> {
                   } catch (e) {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                      SnackBar(
+                        content: Text(
+                          e.toString().replaceFirst('Exception: ', ''),
+                        ),
+                      ),
                     );
                     return;
                   }
