@@ -42,21 +42,25 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
 
   String? _expectedCode;
   String? _errorText;
+  StreamSubscription<Map<String, dynamic>?>? _userSub;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    _loadExpectedCode();
+    _listenForExpectedCode();
   }
 
   // Admin panelinden (kullanici-detay.html -> "Kod Oluştur") üretilen kod,
-  // users/{id}.loginCode alanında tutuluyor. Sabit '12345' yerine bu kontrol ediliyor.
-  Future<void> _loadExpectedCode() async {
-    final userData = await UserService().getUserByPhone(widget.phoneNumber);
-    if (!mounted) return;
-    setState(() {
-      _expectedCode = userData?['loginCode'] as String?;
+  // users/{id}.loginCode alanında tutuluyor. Tek seferlik sorgu yerine canlı
+  // dinleniyor: kullanıcı bu ekrandayken admin kodu yeniden oluşturursa,
+  // ekran yeniden açılmadan _expectedCode anında güncellenir.
+  void _listenForExpectedCode() {
+    _userSub = UserService().watchUserByPhone(widget.phoneNumber).listen((userData) {
+      if (!mounted) return;
+      setState(() {
+        _expectedCode = userData?['loginCode'] as String?;
+      });
     });
   }
 
@@ -76,6 +80,7 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   @override
   void dispose() {
     _timer.cancel();
+    _userSub?.cancel();
     for (final c in _controllers) {
       c.dispose();
     }

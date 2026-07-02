@@ -3,6 +3,7 @@
 // Kullanım: her sayfada <div id="sidebar-slot"></div> ve
 // <div id="topbar-slot"></div> bırakılır, sayfa sonunda
 // mountSidebar('sidebar-slot', 'randevular') gibi çağrılır.
+import { logout } from "./auth.js";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "index.html", label: "Dashboard" },
@@ -27,11 +28,15 @@ export function mountSidebar(containerId, activeKey) {
       <nav class="nav">${navHtml}</nav>
       <div class="sidebar-footer">
         <a class="nav-item" href="#">Yardım</a>
-        <a class="nav-item" href="#"><span class="nav-icon">↩</span> Çıkış</a>
+        <a class="nav-item" href="#" id="logout-link"><span class="nav-icon">↩</span> Çıkış</a>
       </div>
     </aside>`;
 
   document.getElementById(containerId).outerHTML = html;
+  document.getElementById("logout-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    logout();
+  });
 }
 
 export function mountTopbar(containerId) {

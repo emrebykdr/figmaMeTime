@@ -80,6 +80,19 @@ class UserService {
     return null;
   }
 
+  /// getUserByPhone'un canlı (stream) hali: admin panelinden kullanıcı
+  /// verisi (ör. loginCode) değiştiğinde, ekran yeniden açılmadan anında
+  /// günceli yayınlar. login_phone_code.dart'ta kod ekranı açıkken admin
+  /// yeni kod üretirse diye kullanılıyor.
+  Stream<Map<String, dynamic>?> watchUserByPhone(String phone) {
+    return _firestore
+        .collection('users')
+        .where('phone', isEqualTo: phone)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.isNotEmpty ? snapshot.docs.first.data() : null);
+  }
+
   /// userId sabit olduğu için telefon değişse bile doğru kullanıcıyı bulur.
   Future<Map<String, dynamic>?> getUserById(String userId) async {
     final doc = await _firestore.collection('users').doc(userId).get();

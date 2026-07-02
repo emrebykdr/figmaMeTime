@@ -16,24 +16,68 @@
       <main class="content">
         <h1 class="page-title">Dashboard</h1>
 
+        <div id="pending-alert" class="alert-banner">
+          <span id="pending-alert-text">Yükleniyor...</span>
+          <a class="secondary-btn" href="randevular.html">Onay Kuyruğuna Git</a>
+        </div>
+
+        <h2 class="section-title">Randevu Özeti</h2>
         <section class="overview">
           <div class="stat-card">
-            <span class="stat-label">Bekleyen Randevu</span>
-            <span class="stat-value" id="stat-waiting">-</span>
+            <span class="stat-label">Bugün</span>
+            <span class="stat-value" id="today-count">-</span>
+            <span class="stat-sub">Doluluk: <strong id="today-occupancy">-</strong>%</span>
+            <span class="stat-sub">Ciro (tahmini): <strong id="today-revenue">-</strong></span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Onaylı Randevu</span>
-            <span class="stat-value" id="stat-upcoming">-</span>
+            <span class="stat-label">Bu Hafta</span>
+            <span class="stat-value" id="week-count">-</span>
+            <span class="stat-sub">Doluluk: <strong id="week-occupancy">-</strong>%</span>
+            <span class="stat-sub">Ciro (tahmini): <strong id="week-revenue">-</strong></span>
           </div>
+          <div class="stat-card">
+            <span class="stat-label">Bu Ay</span>
+            <span class="stat-value" id="month-count">-</span>
+            <span class="stat-sub">Doluluk: <strong id="month-occupancy">-</strong>%</span>
+            <span class="stat-sub">Ciro (tahmini): <strong id="month-revenue">-</strong></span>
+          </div>
+        </section>
+
+        <h2 class="section-title">En Çok Tercih Edilenler</h2>
+        <section class="overview two-col">
+          <div class="card">
+            <div class="card-header">
+              <h2>Popüler Hizmetler</h2>
+            </div>
+            <ol class="top-list" id="top-services"></ol>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2>Popüler Uzmanlar</h2>
+            </div>
+            <ol class="top-list" id="top-professionals"></ol>
+          </div>
+        </section>
+
+        <h2 class="section-title">Genel</h2>
+        <section class="overview">
           <div class="stat-card">
             <span class="stat-label">Kayıtlı Kullanıcı</span>
             <span class="stat-value" id="stat-users">-</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Toplam Randevu</span>
+            <span class="stat-value" id="stat-total-bookings">-</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Kayıtlı Uzman</span>
+            <span class="stat-value" id="stat-professionals">-</span>
           </div>
         </section>
       </main>
     </div>
   </div>
 
-  <script type="module" src="app.js?v=2"></script>
+  <script type="module" src="app.js?v=4"></script>
 </body>
 </html>

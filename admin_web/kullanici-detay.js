@@ -1,6 +1,7 @@
-import { db } from "./shared/firebase.js";
-import { mountSidebar, mountTopbar } from "./shared/layout.js";
-import { effectiveStatus } from "./shared/bookingStatus.js";
+import { db } from "./shared/firebase.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
+import { requireLogin } from "./shared/auth.js?v=2";
+import { effectiveStatus } from "./shared/bookingStatus.js?v=2";
 import {
   doc,
   getDoc,
@@ -10,6 +11,8 @@ import {
   where,
   getDocs,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+requireLogin();
 
 mountSidebar("sidebar-slot", "kullanicilar");
 mountTopbar("topbar-slot");
