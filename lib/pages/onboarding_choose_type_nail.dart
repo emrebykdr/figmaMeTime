@@ -83,6 +83,7 @@ class _OnboardingChooseTypeNailState extends State<OnboardingChooseTypeNail> {
                             final title = service['name'] as String? ?? '';
                             final price = service['price'] as String? ?? '';
                             return ServiceCard(
+                              imagePath: service['photoUrl'] as String? ?? '',
                               title: title,
                               price: price,
                               onTap: () {

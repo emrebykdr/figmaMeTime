@@ -17,10 +17,22 @@ void main() async {
   );
 
   // Cihazda daha önce kaydedilmiş bir oturum var mı diye bakar (SharedPreferences üzerinden).
-  final loggedIn = await UserService.isLoggedIn();
+  var loggedIn = await UserService.isLoggedIn();
   if (loggedIn) {
     // Varsa kullanıcı bilgilerini (id, telefon, isim) statik alanlara yükler.
     await UserService.loadSession();
+
+    // Oturum cihazda kayıtlı olsa bile, hesap admin panelinden sonradan
+    // "Hesabı Engelle" ile işaretlenmiş olabilir. Her açılışta kontrol
+    // edilir; engelliyse oturum kapatılıp giriş ekranına düşülür.
+    final userId = UserService.currentUserId;
+    if (userId != null) {
+      final userData = await UserService().getUserById(userId);
+      if (userData?['accountBlocked'] == true) {
+        await UserService.logout();
+        loggedIn = false;
+      }
+    }
   }
 
   // Uygulamayı başlatır ve giriş durumunu MyApp'e parametre olarak geçer.

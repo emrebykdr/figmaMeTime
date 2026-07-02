@@ -45,8 +45,8 @@ class ServiceCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(r.r(5)),
-              // admin_web/hizmetler.html'de hizmetler için fotoğraf alanı
-              // yok, bu yüzden imagePath çoğunlukla boş gelir.
+              // admin_web/hizmetler.html'den girilen fotoğraf URL'si (varsa)
+              // ağ üzerinden yükleniyor; boşsa/yüklenemezse ikon gösterilir.
               child: imagePath.isEmpty
                   ? Container(
                       width: r.w(72),
@@ -54,11 +54,17 @@ class ServiceCard extends StatelessWidget {
                       color: AppColors.cardBackground,
                       child: Icon(Icons.spa, color: AppColors.white, size: r.w(32)),
                     )
-                  : Image.asset(
+                  : Image.network(
                       imagePath,
                       width: r.w(72),
                       height: r.w(72),
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: r.w(72),
+                        height: r.w(72),
+                        color: AppColors.cardBackground,
+                        child: Icon(Icons.spa, color: AppColors.white, size: r.w(32)),
+                      ),
                     ),
             ),
             SizedBox(width: r.w(16)),

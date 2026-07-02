@@ -39,6 +39,27 @@ tabButtons.forEach((btn) => {
   });
 });
 
+// Kullanıcı adları (Onay Kuyruğu, Tüm Randevular ve Yeni Randevu'daki arama
+// kutusu için) users koleksiyonundan bir kere çekilip cache'leniyor.
+// Onay Kuyruğu ilk render'ından önce yüklenmesi gerektiği için burada,
+// dosyanın başında tanımlanıyor (bkz. dosya sonundaki loadUserOptions().then(loadQueue)).
+let allUsers = [];
+
+async function loadUserOptions() {
+  const snapshot = await getDocs(collection(db, "users"));
+  allUsers = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+}
+
+function userLabel(user) {
+  return `${user.fullName ?? "İsimsiz"} (${user.phone ?? "-"})`;
+}
+
+function customerLabel(userId) {
+  const user = allUsers.find((u) => u.id === userId);
+  if (user) return user.fullName ?? "İsimsiz";
+  return userId ? "Bilinmeyen kullanıcı" : "-";
+}
+
 // --- Onay Kuyruğu: status == 'waiting' olan randevuları listele, onayla ---
 const statusEl = document.getElementById("status");
 const bodyEl = document.getElementById("bookings-body");
@@ -71,6 +92,7 @@ function renderQueuePage() {
   queueBookings.slice(start, start + PAGE_SIZE).forEach((booking) => {
     const row = document.createElement("tr");
     row.innerHTML = `
+      <td>${customerLabel(booking.userId)}</td>
       <td>${booking.salon ?? ""}</td>
       <td>${booking.professional ?? ""}</td>
       <td>${booking.service ?? ""}</td>
@@ -115,7 +137,9 @@ async function updateBookingStatus(bookingId, status) {
   if (calendarLoaded) await loadCalendar();
 }
 
-loadQueue();
+// Kullanıcı listesi yüklenmeden kuyruk render edilirse müşteri isimleri
+// boş görünür; bu yüzden ilk render'dan önce sırayla bekleniyor.
+loadUserOptions().then(loadQueue);
 
 // --- Tüm Randevular: statüye göre filtrelenebilen, tarihe göre sıralı liste ---
 const allStatusFilterEl = document.getElementById("all-status-filter");
@@ -343,20 +367,8 @@ loadServiceOptions();
 
 // Kullanıcı seçimi bir arama kutusu (combobox) ile yapılıyor: kullanıcı
 // sayısı arttıkça uzun bir dropdown yerine isim/telefonla filtrelenebilen
-// bir liste daha kullanışlı. users koleksiyonu bir kere çekilip cache'leniyor.
-let allUsers = [];
-
-async function loadUserOptions() {
-  const snapshot = await getDocs(collection(db, "users"));
-  allUsers = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
-}
-
-loadUserOptions();
-
-function userLabel(user) {
-  return `${user.fullName ?? "İsimsiz"} (${user.phone ?? "-"})`;
-}
-
+// bir liste daha kullanışlı. allUsers/loadUserOptions/userLabel dosyanın
+// başında tanımlı (Onay Kuyruğu'nda müşteri ismi göstermek için de kullanılıyor).
 function selectUser(user) {
   newUserEl.value = user.id;
   newUserSearchEl.value = userLabel(user);

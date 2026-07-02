@@ -21,6 +21,8 @@ const nameEl = document.getElementById("service-name");
 const categoryEl = document.getElementById("service-category");
 const durationEl = document.getElementById("service-duration");
 const priceEl = document.getElementById("service-price");
+const photoUrlEl = document.getElementById("service-photo-url");
+const photoPreviewEl = document.getElementById("photo-preview");
 const saveBtnEl = document.getElementById("save-btn");
 const resetBtnEl = document.getElementById("reset-btn");
 const deleteBtnEl = document.getElementById("delete-btn");
@@ -28,6 +30,10 @@ const formStatusEl = document.getElementById("form-status");
 
 let services = [];
 let editingId = null;
+
+photoUrlEl.addEventListener("input", () => {
+  photoPreviewEl.src = photoUrlEl.value.trim();
+});
 
 async function loadServices() {
   listStatusEl.textContent = "Yükleniyor...";
@@ -49,6 +55,7 @@ function renderList() {
   services.forEach((service) => {
     const row = document.createElement("tr");
     row.innerHTML = `
+      <td>${service.photoUrl ? `<img class="table-thumb" src="${service.photoUrl}" alt="" />` : ""}</td>
       <td>${service.name ?? ""}</td>
       <td>${service.category ?? ""}</td>
       <td>${service.duration ?? ""} dk</td>
@@ -69,6 +76,8 @@ function renderList() {
 function resetForm() {
   editingId = null;
   formEl.reset();
+  photoUrlEl.value = "";
+  photoPreviewEl.src = "";
   formTitleEl.textContent = "Yeni Hizmet";
   saveBtnEl.textContent = "Hizmet Ekle";
   deleteBtnEl.hidden = true;
@@ -81,6 +90,8 @@ function startEdit(service) {
   categoryEl.value = service.category ?? "Nail";
   durationEl.value = service.duration ?? "";
   priceEl.value = service.price ?? "";
+  photoUrlEl.value = service.photoUrl ?? "";
+  photoPreviewEl.src = service.photoUrl ?? "";
 
   formTitleEl.textContent = "Hizmeti Düzenle";
   saveBtnEl.textContent = "Kaydet";
@@ -123,7 +134,7 @@ formEl.addEventListener("submit", async (e) => {
   const docRef = editingId ? doc(db, "services", editingId) : doc(collection(db, "services"));
 
   try {
-    const data = { id: docRef.id, name, category, duration, price };
+    const data = { id: docRef.id, name, category, duration, price, photoUrl: photoUrlEl.value.trim() };
 
     if (editingId) {
       await updateDoc(docRef, data);

@@ -24,6 +24,7 @@
           <table class="bookings-table">
             <thead>
               <tr>
+                <th>Fotoğraf</th>
                 <th>İsim</th>
                 <th>Kategori</th>
                 <th>Süre</th>
@@ -68,6 +69,14 @@
               <input type="text" id="service-price" placeholder="$30" required />
             </label>
 
+            <label>
+              Fotoğraf URL'si
+              <div class="field-row">
+                <img id="photo-preview" class="photo-preview" alt="" />
+                <input type="text" id="service-photo-url" placeholder="https://..." />
+              </div>
+            </label>
+
             <div class="form-actions">
               <button type="submit" id="save-btn" class="approve-btn">Hizmet Ekle</button>
               <button type="button" id="reset-btn" class="secondary-btn">Yeni Hizmet</button>
@@ -80,6 +89,6 @@
     </div>
   </div>
 
-  <script type="module" src="hizmetler.js"></script>
+  <script type="module" src="hizmetler.js?v=2"></script>
 </body>
 </html>
