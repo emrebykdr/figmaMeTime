@@ -3,6 +3,7 @@ import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
 import { requireLogin } from "./shared/auth.js?v=2";
 import { PAGE_SIZE, renderPagination } from "./shared/pagination.js?v=2";
 import { effectiveStatus } from "./shared/bookingStatus.js?v=2";
+import { notifyBookingStatusChange } from "./shared/notifications.js?v=1";
 import {
   collection,
   query,
@@ -135,6 +136,7 @@ function renderQueuePage() {
 // buradan geçer; açık olan sekmeler otomatik tazelenir.
 async function updateBookingStatus(bookingId, status) {
   await updateDoc(doc(db, "bookings", bookingId), { status });
+  await notifyBookingStatusChange(db, bookingId, status);
   await loadQueue();
   if (allBookingsLoaded) await loadAllBookings();
   if (calendarLoaded) await loadCalendar();

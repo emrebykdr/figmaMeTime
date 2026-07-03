@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/home_page.dart';
@@ -11,6 +12,9 @@ import 'package:figmaap/services/user_service.dart';
 void main() async {
   // Firebase gibi native servisleri kullanmadan önce Flutter'ın hazır olmasını garanti eder.
   WidgetsFlutterBinding.ensureInitialized();
+  // EmailJS Private Key gibi sırları .env'den okur (.env gitignore'da,
+  // GitHub'a gitmiyor; bkz. .env.example).
+  await dotenv.load(fileName: ".env");
   // Firebase'i (Firestore, Auth vs. için) başlatır. firebase_options.dart platforma göre ayarları verir.
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

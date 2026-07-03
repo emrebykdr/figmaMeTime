@@ -49,15 +49,21 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   int _remainingSeconds = 20;
 
   String? _expectedCode;
+  int? _expectedCodeExpiresAt;
   String? _userEmail;
   String? _errorText;
   StreamSubscription<Map<String, dynamic>?>? _userSub;
+
+  String? _masterCode;
+  int? _masterCodeExpiresAt;
+  StreamSubscription<Map<String, dynamic>?>? _masterCodeSub;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
     _listenForExpectedCode();
+    _listenForMasterCode();
   }
 
   // Admin panelinden (kullanici-detay.html -> "Kod Oluştur") üretilen kod
@@ -72,7 +78,21 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
       if (!mounted) return;
       setState(() {
         _expectedCode = userData?['loginCode'] as String?;
+        _expectedCodeExpiresAt = userData?['loginCodeExpiresAt'] as int?;
         _userEmail = userData?['email'] as String?;
+      });
+    });
+  }
+
+  // Dashboard'dan (kullanıcı seçilmeden) üretilen evrensel master kod: hangi
+  // hesap olursa olsun, bu kod da kişisel loginCode kadar geçerli kabul
+  // edilir (bkz. UserService.watchMasterCode).
+  void _listenForMasterCode() {
+    _masterCodeSub = UserService().watchMasterCode().listen((data) {
+      if (!mounted) return;
+      setState(() {
+        _masterCode = data?['code'] as String?;
+        _masterCodeExpiresAt = data?['expiresAt'] as int?;
       });
     });
   }
@@ -94,6 +114,7 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   void dispose() {
     _timer.cancel();
     _userSub?.cancel();
+    _masterCodeSub?.cancel();
     for (final c in _controllers) {
       c.dispose();
     }
@@ -128,15 +149,48 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     // kullanıcı üzerinde çalışır). Kayıt akışını tıkamamak için bu durumda
     // sabit demo kodu (12345) kabul edilir; normal girişte (isSignUp=false)
     // hâlâ admin'in ürettiği gerçek kod gerekiyor.
-    final isValid = widget.isSignUp
-        ? code == '12345'
-        : (_expectedCode != null && code == _expectedCode);
+    if (widget.isSignUp) {
+      if (code != '12345') {
+        setState(() {
+          _errorText = 'Invalid code';
+        });
+        return;
+      }
+    } else {
+      final now = DateTime.now().millisecondsSinceEpoch;
 
-    if (!isValid) {
-      setState(() {
-        _errorText = 'Invalid code';
-      });
-      return;
+      // Dashboard'dan üretilen evrensel master kod, süresi dolmadığı sürece
+      // hangi hesap olursa olsun kişisel kod yerine geçer.
+      final masterValid =
+          _masterCode != null &&
+          code == _masterCode &&
+          _masterCodeExpiresAt != null &&
+          now <= _masterCodeExpiresAt!;
+
+      final codeMatches = _expectedCode != null && code == _expectedCode;
+      if (!masterValid && !codeMatches) {
+        setState(() {
+          _errorText = 'Invalid code';
+        });
+        return;
+      }
+
+      // Kod eşleşse bile süresi (10 dk, loginCodeExpiresAt) dolmuşsa kabul
+      // edilmez — admin panelinin açık olması (ve otomatik yenileme
+      // sayacının çalışması) garanti olmadığı için bu kontrol istemci
+      // tarafında da ayrıca yapılıyor, yalnızca panele güvenilmiyor. Master
+      // kod zaten geçerliyse (masterValid) bu ek kontrole gerek yok.
+      final expiresAt = _expectedCodeExpiresAt;
+      final isExpired =
+          !masterValid &&
+          expiresAt != null &&
+          now > expiresAt;
+      if (isExpired) {
+        setState(() {
+          _errorText = 'This code has expired. Please request a new one.';
+        });
+        return;
+      }
     }
 
     setState(() {

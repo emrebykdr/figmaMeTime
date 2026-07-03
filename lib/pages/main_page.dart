@@ -10,7 +10,10 @@ import 'package:figmaap/pages/bookings_page.dart';
 import 'package:figmaap/pages/onboarding_choose_type_nail.dart';
 import 'package:figmaap/pages/salon_page.dart';
 import 'package:figmaap/pages/home_page.dart';
+import 'package:figmaap/pages/account_settings_page.dart';
+import 'package:figmaap/pages/notifications_page.dart';
 import 'package:figmaap/services/user_service.dart';
+import 'package:figmaap/services/notification_service.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -54,12 +57,14 @@ class _MainPageState extends State<MainPage> {
   ];
 
   StreamSubscription<bool>? _blockedSub;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
     _loadUserName();
     _listenForAccountBlocked();
+    NotificationService().checkTodayReminders();
   }
 
   // Admin panelden hesap engellendiğinde, uygulama açıkken bile anında
@@ -112,7 +117,9 @@ class _MainPageState extends State<MainPage> {
     final r = Responsive(context);
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
+      drawer: _buildAppDrawer(r),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -140,12 +147,193 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  Widget _buildAppDrawer(Responsive r) {
+    return Drawer(
+      backgroundColor: AppColors.background,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(r.w(24), r.h(24), r.w(24), r.h(16)),
+              child: Text(
+                _userName,
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  fontWeight: FontWeight.w700,
+                  fontSize: r.sp(20),
+                  color: AppColors.almostBlack,
+                ),
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE0E0E0)),
+            SizedBox(height: r.h(8)),
+            _buildDrawerTile(
+              r,
+              icon: Icons.settings_outlined,
+              label: 'Account Settings',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+                );
+              },
+            ),
+            _buildNotificationsDrawerTile(r),
+            const Spacer(),
+            const Divider(height: 1, color: Color(0xFFE0E0E0)),
+            _buildDrawerTile(
+              r,
+              icon: Icons.logout,
+              label: 'Log out',
+              color: AppColors.cancel,
+              onTap: () {
+                Navigator.pop(context);
+                _confirmLogout();
+              },
+            ),
+            SizedBox(height: r.h(8)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerTile(
+    Responsive r, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+    Widget? trailing,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? AppColors.almostBlack),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Raleway',
+          fontWeight: FontWeight.w600,
+          fontSize: r.sp(15),
+          color: color ?? AppColors.almostBlack,
+        ),
+      ),
+      trailing: trailing,
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildNotificationsDrawerTile(Responsive r) {
+    return StreamBuilder<int>(
+      stream: NotificationService().watchUnreadCount(),
+      builder: (context, snapshot) {
+        final unread = snapshot.data ?? 0;
+        return _buildDrawerTile(
+          r,
+          icon: Icons.notifications_none,
+          label: 'Notifications',
+          trailing: unread > 0
+              ? Container(
+                  padding: EdgeInsets.symmetric(horizontal: r.w(8), vertical: r.h(2)),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(r.r(12)),
+                  ),
+                  child: Text(
+                    '$unread',
+                    style: TextStyle(
+                      fontFamily: 'Raleway',
+                      fontWeight: FontWeight.w700,
+                      fontSize: r.sp(12),
+                      color: AppColors.almostBlack,
+                    ),
+                  ),
+                )
+              : null,
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsPage()),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmLogout() async {
+    final r = Responsive(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.r(16))),
+        title: Text(
+          'Log out',
+          style: TextStyle(
+            fontFamily: 'Raleway',
+            fontWeight: FontWeight.w700,
+            fontSize: r.sp(18),
+            color: AppColors.almostBlack,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to log out?',
+          style: TextStyle(
+            fontFamily: 'Raleway',
+            fontWeight: FontWeight.w500,
+            fontSize: r.sp(14),
+            color: AppColors.tertiary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w600,
+                color: AppColors.tertiary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Log out',
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w700,
+                color: AppColors.cancel,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    await UserService.logout();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+      (route) => false,
+    );
+  }
+
   Widget _buildTopMenu(Responsive r) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: r.w(30)),
       child: Row(
         children: [
-          SvgPicture.asset('assets/icons/menu.svg', width: r.w(25), height: r.w(25)),
+          GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: SvgPicture.asset('assets/icons/menu.svg', width: r.w(25), height: r.w(25)),
+          ),
           SizedBox(width: r.w(7)),
           RichText(
             text: TextSpan(

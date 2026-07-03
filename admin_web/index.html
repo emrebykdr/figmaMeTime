@@ -74,10 +74,28 @@
             <span class="stat-value" id="stat-professionals">-</span>
           </div>
         </section>
+
+        <h2 class="section-title">Kullanıcı Girişi</h2>
+        <section class="card">
+          <div class="card-header">
+            <h2>Master Giriş Kodu</h2>
+          </div>
+          <p class="status">Bu kod herhangi bir hesabın giriş kodu ekranında kullanılabilir (10 dk geçerli).</p>
+          <div class="booking-form">
+            <div class="field-row">
+              <button type="button" id="login-code-generate-btn" class="secondary-btn">Kod Oluştur</button>
+            </div>
+            <div class="field-row" id="login-code-result-row" hidden>
+              <input type="text" id="login-code-result" disabled />
+              <span id="login-code-timer" class="code-timer"></span>
+            </div>
+            <p id="login-code-status" class="status"></p>
+          </div>
+        </section>
       </main>
     </div>
   </div>
 
-  <script type="module" src="app.js?v=4"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@ import { db } from "./shared/firebase.js?v=2";
 import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
 import { requireLogin } from "./shared/auth.js?v=2";
 import { effectiveStatus } from "./shared/bookingStatus.js?v=2";
-import { sendEmail } from "./shared/gmail.js?v=1";
+import { notifyBookingStatusChange } from "./shared/notifications.js?v=1";
 import {
   doc,
   getDoc,
@@ -38,16 +38,10 @@ const restrictBtnEl = document.getElementById("restrict-btn");
 const restrictBadgeEl = document.getElementById("restrict-status-badge");
 const blockBtnEl = document.getElementById("block-btn");
 const blockBadgeEl = document.getElementById("block-status-badge");
-const loginCodeEl = document.getElementById("login-code");
-const generateCodeBtnEl = document.getElementById("generate-code-btn");
-const loginCodeTimerEl = document.getElementById("login-code-timer");
 const upcomingBodyEl = document.getElementById("upcoming-body");
 const pastBodyEl = document.getElementById("past-body");
 
-const CODE_LIFETIME_MS = 10 * 60 * 1000;
-
 let currentUser = null;
-let codeTimerInterval = null;
 
 function formatDate(timestamp) {
   if (!timestamp?.toDate) return "-";
@@ -89,94 +83,9 @@ async function loadUser() {
   phoneEl.value = currentUser.phone ?? "";
   emailEl.value = currentUser.email ?? "-";
   createdEl.value = formatDate(currentUser.createdAt);
-  loginCodeEl.value = currentUser.loginCode ?? "Henüz oluşturulmadı";
   renderRestrictState();
   renderBlockState();
-
-  // Sayfa açıldığında, önceden üretilmiş ve süresi henüz dolmamış bir kod
-  // varsa geri sayımı kaldığı yerden başlat; süresi dolmuşsa hemen yenile.
-  const expiresAt = currentUser.loginCodeExpiresAt;
-  if (currentUser.loginCode && typeof expiresAt === "number") {
-    if (expiresAt > Date.now()) {
-      startCodeTimer(expiresAt);
-    } else {
-      generateAndSendCode();
-    }
-  }
 }
-
-// Mobil tarafta login_phone_code.dart artık girilen kodu buradaki
-// loginCode alanıyla karşılaştırıyor (sabit '12345' yerine).
-function generateLoginCode() {
-  return String(Math.floor(10000 + Math.random() * 90000));
-}
-
-function formatRemaining(ms) {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-  const seconds = String(totalSeconds % 60).padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-// 10 dakikalık geri sayım; süre dolunca kod otomatik olarak yenilenir ve
-// (mümkünse) yeniden email gönderilir. Admin manuel "Kod Oluştur"a bastığında
-// da bu sayaç sıfırdan başlatılır.
-function startCodeTimer(expiresAt) {
-  if (codeTimerInterval) clearInterval(codeTimerInterval);
-
-  const tick = () => {
-    const remaining = expiresAt - Date.now();
-    if (remaining <= 0) {
-      clearInterval(codeTimerInterval);
-      codeTimerInterval = null;
-      loginCodeTimerEl.textContent = "Yenileniyor...";
-      generateAndSendCode();
-      return;
-    }
-    loginCodeTimerEl.textContent = `Yenilenmesine: ${formatRemaining(remaining)}`;
-  };
-
-  tick();
-  codeTimerInterval = setInterval(tick, 1000);
-}
-
-async function generateAndSendCode() {
-  if (!currentUser) return;
-  const code = generateLoginCode();
-  const expiresAt = Date.now() + CODE_LIFETIME_MS;
-  generateCodeBtnEl.disabled = true;
-  await updateDoc(doc(db, "users", currentUser.id), {
-    loginCode: code,
-    loginCodeExpiresAt: expiresAt,
-  });
-  currentUser.loginCode = code;
-  currentUser.loginCodeExpiresAt = expiresAt;
-  loginCodeEl.value = code;
-  startCodeTimer(expiresAt);
-
-  if (!currentUser.email) {
-    formStatusEl.textContent = `Kod oluşturuldu (${code}) ama kullanıcının email adresi yok, gönderilemedi.`;
-    generateCodeBtnEl.disabled = false;
-    return;
-  }
-
-  formStatusEl.textContent = `Yeni giriş kodu oluşturuldu: ${code}. Email gönderiliyor (Google izin ekranı açılabilir)...`;
-  try {
-    await sendEmail(
-      currentUser.email,
-      "MeTime Giriş Kodunuz",
-      `Merhaba ${currentUser.fullName ?? ""},\n\nGiriş kodunuz: ${code}\n\nMeTime`
-    );
-    formStatusEl.textContent = `Yeni giriş kodu oluşturuldu ve ${currentUser.email} adresine gönderildi: ${code}`;
-  } catch (err) {
-    console.error(err);
-    formStatusEl.textContent = `Kod oluşturuldu (${code}) ama email gönderilemedi: ${err.message}. Kodu manuel iletebilirsin.`;
-  }
-
-  generateCodeBtnEl.disabled = false;
-}
-
-generateCodeBtnEl.addEventListener("click", () => generateAndSendCode());
 
 restrictBtnEl.addEventListener("click", async () => {
   if (!currentUser) return;
@@ -289,6 +198,7 @@ function renderUpcomingRows(bodyEl, bookings) {
 
 async function updateBookingStatus(bookingId, status) {
   await updateDoc(doc(db, "bookings", bookingId), { status });
+  await notifyBookingStatusChange(db, bookingId, status);
   await loadBookingHistory();
 }
 

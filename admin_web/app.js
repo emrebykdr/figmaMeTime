@@ -1,6 +1,7 @@
 import { db } from "./shared/firebase.js?v=2";
 import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
 import { requireLogin } from "./shared/auth.js?v=2";
+import { generateMasterCode, formatRemaining } from "./shared/loginCode.js?v=3";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const loggedIn = requireLogin();
@@ -174,4 +175,49 @@ async function loadDashboard() {
   document.getElementById("stat-professionals").textContent = professionals.length;
 }
 
-if (loggedIn) loadDashboard();
+// --- Master Giriş Kodu: kullanıcı seçmeden, herhangi bir hesap için geçerli
+// TEK bir kod üretir (bkz. shared/loginCode.js -> generateMasterCode ve
+// UserService.watchMasterCode). Belirli bir kullanıcıya bağlı olmadığı için
+// email gönderilmez, kod sadece burada gösterilir.
+const loginCodeGenerateBtnEl = document.getElementById("login-code-generate-btn");
+const loginCodeResultRowEl = document.getElementById("login-code-result-row");
+const loginCodeResultEl = document.getElementById("login-code-result");
+const loginCodeTimerEl = document.getElementById("login-code-timer");
+const loginCodeStatusEl = document.getElementById("login-code-status");
+
+let loginCodeTimerInterval = null;
+
+function startLoginCodeTimer(expiresAt) {
+  if (loginCodeTimerInterval) clearInterval(loginCodeTimerInterval);
+
+  const tick = () => {
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) {
+      clearInterval(loginCodeTimerInterval);
+      loginCodeTimerInterval = null;
+      loginCodeTimerEl.textContent = "Süresi doldu";
+      return;
+    }
+    loginCodeTimerEl.textContent = `Geçerlilik: ${formatRemaining(remaining)}`;
+  };
+
+  tick();
+  loginCodeTimerInterval = setInterval(tick, 1000);
+}
+
+loginCodeGenerateBtnEl.addEventListener("click", async () => {
+  loginCodeGenerateBtnEl.disabled = true;
+  loginCodeStatusEl.textContent = "Kod oluşturuluyor...";
+
+  const result = await generateMasterCode(db);
+  loginCodeResultRowEl.hidden = false;
+  loginCodeResultEl.value = result.code;
+  startLoginCodeTimer(result.expiresAt);
+  loginCodeStatusEl.textContent = `Master kod oluşturuldu: ${result.code}. Herhangi bir hesabın giriş kodu ekranında kullanılabilir.`;
+
+  loginCodeGenerateBtnEl.disabled = false;
+});
+
+if (loggedIn) {
+  loadDashboard();
+}

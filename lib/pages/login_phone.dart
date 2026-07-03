@@ -7,6 +7,7 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/pages/login_phone_code.dart';
 import 'package:figmaap/services/user_service.dart';
+import 'package:figmaap/services/email_service.dart';
 
 class LoginPhone extends StatefulWidget {
   final Map<String, dynamic>? professional;
@@ -82,6 +83,23 @@ class _LoginPhoneState extends State<LoginPhone> {
     }
 
     final phone = userData['phone'] as String?;
+    final userId = userData['id'] as String?;
+    final fullName = userData['fullName'] as String?;
+
+    // Admin panelinden manuel "Kod Oluştur"a basılmasını beklemeden, kod
+    // burada hemen üretilip Firestore'a yazılıyor ve EmailJS ile (Gmail
+    // OAuth popup gerektirmeden) doğrudan mobil uygulamadan gönderiliyor.
+    // login_phone_code.dart bu kodu watchUserByPhone ile zaten canlı dinliyor.
+    if (userId != null) {
+      final code = await UserService().issueLoginCode(userId);
+      await EmailService().sendLoginCode(
+        toEmail: email,
+        toName: fullName ?? '',
+        code: code,
+      );
+    }
+    if (!mounted) return;
+
     setState(() {
       _isChecking = false;
     });

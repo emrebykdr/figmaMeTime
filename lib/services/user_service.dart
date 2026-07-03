@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -80,6 +81,20 @@ class UserService {
     return null;
   }
 
+  /// Yeni bir 5 haneli giriş kodu üretir ve Firestore'a (loginCode +
+  /// loginCodeExpiresAt, 10 dk geçerli) yazar. Mobil tarafta
+  /// login_phone.dart, kullanıcı email girip devam ettiğinde bunu otomatik
+  /// tetikler.
+  Future<String> issueLoginCode(String userId) async {
+    final code = (10000 + Random().nextInt(90000)).toString();
+    final expiresAt = DateTime.now().millisecondsSinceEpoch + 10 * 60 * 1000;
+    await _firestore.collection('users').doc(userId).update({
+      'loginCode': code,
+      'loginCodeExpiresAt': expiresAt,
+    });
+    return code;
+  }
+
   /// login_phone.dart artık telefon yerine email ile giriş yaptırıyor
   /// (giriş kodu Gmail üzerinden gönderildiği için). Hesabın alttaki
   /// kimliği hâlâ telefon numarası olduğundan, bulunan kullanıcının
@@ -107,6 +122,19 @@ class UserService {
         .limit(1)
         .snapshots()
         .map((snapshot) => snapshot.docs.isNotEmpty ? snapshot.docs.first.data() : null);
+  }
+
+  /// Dashboard'da (admin_web/app.js -> "Kod Oluştur", kullanıcı seçilmeden)
+  /// üretilen TEK evrensel kod: herhangi bir hesabın giriş kodu ekranında
+  /// girilirse, o kişisel loginCode'a ek olarak bu da kabul edilir —
+  /// destek/test amaçlı bir yedek. adminConfig/masterCode dokümanında
+  /// tutulur (bkz. admin_web/shared/loginCode.js -> generateMasterCode).
+  Stream<Map<String, dynamic>?> watchMasterCode() {
+    return _firestore
+        .collection('adminConfig')
+        .doc('masterCode')
+        .snapshots()
+        .map((snapshot) => snapshot.data());
   }
 
   /// Oturum açıkken (uygulama önden çalışırken) admin, kullanıcının hesabını
@@ -138,6 +166,24 @@ class UserService {
     });
     currentPhone = newPhone;
     await _saveSession(currentUserId!, newPhone, currentUserName ?? '');
+  }
+
+  /// Hesap Ayarları sayfasından ad/email/telefon güncellemesi. currentUserId
+  /// sabit kaldığı için geçmiş randevular bağlı kalmaya devam eder.
+  Future<void> updateProfile({
+    required String fullName,
+    required String email,
+    required String phone,
+  }) async {
+    if (currentUserId == null) return;
+    await _firestore.collection('users').doc(currentUserId).update({
+      'fullName': fullName,
+      'email': email,
+      'phone': phone,
+    });
+    currentUserName = fullName;
+    currentPhone = phone;
+    await _saveSession(currentUserId!, phone, fullName);
   }
 
   //Cihaza yaz
