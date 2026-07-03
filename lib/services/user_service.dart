@@ -111,6 +111,53 @@ class UserService {
     return null;
   }
 
+  /// Bir email zaten BAŞKA bir hesapta doğrulanmışsa (bkz.
+  /// account_settings_page.dart'taki "Verify this email") true döner. Kayıt
+  /// sırasında aynı doğrulanmış email ile ikinci bir hesap açılmasını
+  /// engellemek için sign_up.dart bunu kontrol eder.
+  Future<bool> isEmailVerifiedElsewhere(String email) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .where('emailVerified', isEqualTo: true)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+  /// Hesap Ayarları'ndan email doğrulaması için 5 haneli bir kod üretir ve
+  /// Firestore'a yazar. loginCode'dan ayrı bir alanda tutulur ki kullanıcı
+  /// aynı anda aktif bir giriş kodu varsa onunla çakışmasın.
+  Future<String> issueEmailVerificationCode(String userId) async {
+    final code = (10000 + Random().nextInt(90000)).toString();
+    final expiresAt = DateTime.now().millisecondsSinceEpoch + 10 * 60 * 1000;
+    await _firestore.collection('users').doc(userId).update({
+      'emailVerificationCode': code,
+      'emailVerificationCodeExpiresAt': expiresAt,
+    });
+    return code;
+  }
+
+  /// Girilen kod, süresi dolmamış üretilen kodla eşleşiyorsa emailVerified
+  /// alanını true yapar ve true döner; eşleşmiyorsa/süresi dolmuşsa false
+  /// döner (Firestore'a hiçbir şey yazılmaz).
+  Future<bool> confirmEmailVerification(String userId, String code) async {
+    final doc = await _firestore.collection('users').doc(userId).get();
+    final data = doc.data();
+    if (data == null) return false;
+
+    final expected = data['emailVerificationCode'] as String?;
+    final expiresAt = data['emailVerificationCodeExpiresAt'] as int?;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (expected == null || expected != code) return false;
+    if (expiresAt == null || now > expiresAt) return false;
+
+    await _firestore.collection('users').doc(userId).update({
+      'emailVerified': true,
+    });
+    return true;
+  }
+
   /// getUserByPhone'un canlı (stream) hali: admin panelinden kullanıcı
   /// verisi (ör. loginCode) değiştiğinde, ekran yeniden açılmadan anında
   /// günceli yayınlar. login_phone_code.dart'ta kod ekranı açıkken admin
@@ -137,18 +184,21 @@ class UserService {
         .map((snapshot) => snapshot.data());
   }
 
-  /// Oturum açıkken (uygulama önden çalışırken) admin, kullanıcının hesabını
-  /// engellerse bunu anında yakalamak için kullanılıyor. main.dart'taki
-  /// açılış kontrolü sadece uygulama yeniden başladığında çalışıyordu; bu
-  /// stream, uygulama açık kaldığı sürece de canlı dinleme sağlıyor.
-  Stream<bool> watchAccountBlocked() {
+  /// Giriş yapmış kullanıcının kendi dokümanını canlı dinler. main_page.dart
+  /// bunu iki amaçla kullanır: (1) accountBlocked anında yakalanır (admin
+  /// panelden hesap engellenirse uygulama açıkken bile oturum kapatılır —
+  /// main.dart'taki kontrol sadece açılışta çalışıyordu), (2) Hesap
+  /// Ayarları'nda (veya admin panelinden) isim/email/telefon değişirse
+  /// "Hello, İsim" gibi alanlar anında güncellenir; sayfa yeniden açılmayı
+  /// beklemez.
+  Stream<Map<String, dynamic>?> watchCurrentUser() {
     final userId = currentUserId;
-    if (userId == null) return Stream.value(false);
+    if (userId == null) return Stream.value(null);
     return _firestore
         .collection('users')
         .doc(userId)
         .snapshots()
-        .map((snapshot) => snapshot.data()?['accountBlocked'] == true);
+        .map((snapshot) => snapshot.data());
   }
 
   /// userId sabit olduğu için telefon değişse bile doğru kullanıcıyı bulur.
@@ -170,17 +220,25 @@ class UserService {
 
   /// Hesap Ayarları sayfasından ad/email/telefon güncellemesi. currentUserId
   /// sabit kaldığı için geçmiş randevular bağlı kalmaya devam eder.
+  /// [resetEmailVerification] true geçilirse (email daha önce doğrulanmış
+  /// bir değerden farklı bir değere değiştirildiyse) emailVerified false'a
+  /// çekilir — eski doğrulama yeni email için geçerli sayılmaz.
   Future<void> updateProfile({
     required String fullName,
     required String email,
     required String phone,
+    bool resetEmailVerification = false,
   }) async {
     if (currentUserId == null) return;
-    await _firestore.collection('users').doc(currentUserId).update({
+    final data = <String, dynamic>{
       'fullName': fullName,
       'email': email,
       'phone': phone,
-    });
+    };
+    if (resetEmailVerification) {
+      data['emailVerified'] = false;
+    }
+    await _firestore.collection('users').doc(currentUserId).update(data);
     currentUserName = fullName;
     currentPhone = phone;
     await _saveSession(currentUserId!, phone, fullName);

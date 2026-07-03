@@ -6,6 +6,7 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/pages/login_phone_code.dart';
 import 'package:figmaap/services/user_service.dart';
+import 'package:figmaap/services/email_service.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -159,11 +160,43 @@ class _SignUpState extends State<SignUp> {
           onPressed: _isFormValid
               ? () async {
                   final phone = '$_selectedCode ${_phoneController.text}';
-                  final success = await UserService().registerUser(
-                    fullName: _nameController.text.trim(),
-                    email: _emailController.text.trim(),
-                    phone: phone,
-                  );
+                  final email = _emailController.text.trim();
+
+                  // Hesap Ayarları'ndan bir kez doğrulanmış (bkz.
+                  // account_settings_page.dart -> "Verify this email") email
+                  // adresiyle ikinci bir hesap açılamaz.
+                  final emailTaken = await UserService()
+                      .isEmailVerifiedElsewhere(email);
+                  if (!mounted) return;
+                  if (emailTaken) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'This email is already verified and linked to another account.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
+                  bool success;
+                  try {
+                    success = await UserService().registerUser(
+                      fullName: _nameController.text.trim(),
+                      email: email,
+                      phone: phone,
+                    );
+                  } catch (e) {
+                    // Firestore/Firebase çağrısı hata fırlatırsa (ağ, yanlış
+                    // yapılandırma vb.) önceden sessizce yutuluyordu — buton
+                    // basılmış gibi görünüp hiçbir şey olmuyordu. Artık
+                    // gerçek hata kullanıcıya gösteriliyor.
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Registration failed: $e')),
+                    );
+                    return;
+                  }
                   if (!mounted) return;
                   if (!success) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -171,12 +204,30 @@ class _SignUpState extends State<SignUp> {
                     );
                     return;
                   }
+
+                  // Hesap oluşturulur oluşturulmaz, normal girişte olduğu
+                  // gibi gerçek bir giriş kodu üretilip email'e gönderilir
+                  // (artık sabit demo kod '12345' kullanılmıyor). Gönderim
+                  // başarısız olsa bile kayıt geri alınamayacağı için kod
+                  // ekranına yine de geçilir — orada "Send code again" ile
+                  // tekrar denenebilir ya da admin'in master koduyla girilebilir.
+                  final userId = UserService.currentUserId;
+                  if (userId != null) {
+                    final code = await UserService().issueLoginCode(userId);
+                    await EmailService().sendLoginCode(
+                      toEmail: email,
+                      toName: _nameController.text.trim(),
+                      code: code,
+                    );
+                    if (!mounted) return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => LoginPhoneCode(
                         phoneNumber: phone,
-                        isSignUp: true,
+                        skipToMain: true,
                       ),
                     ),
                   );

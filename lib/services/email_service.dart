@@ -4,12 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// EmailJS (https://www.emailjs.com) üzerinden, herhangi bir backend veya
 /// OAuth popup'ı gerektirmeden doğrudan mobil uygulamadan email gönderir.
-///
-/// Admin panelindeki Gmail entegrasyonu (admin_web/shared/gmail.js) tarayıcı
-/// tabanlı Google OAuth popup'ına bağlı olduğu için sadece admin'in
-/// tarayıcısından tetiklenebiliyor. Mobil uygulamada kullanıcı email girip
-/// "Continue"a bastığı anda kodu otomatik göndermek için bu, popup/OAuth
-/// gerektirmeyen EmailJS'in düz HTTP API'si kullanılıyor.
+/// Kullanıcı login_phone.dart'ta email girip "Continue"a bastığı anda kodu
+/// otomatik göndermek için kullanılır (admin panelinde artık kişiye özel
+/// email gönderimi yok, sadece ekranda gösterilen bir master kod var — bkz.
+/// admin_web/shared/loginCode.js).
 ///
 /// Kurulum:
 /// 1. https://www.emailjs.com adresinde ücretsiz hesap aç.
@@ -29,11 +27,10 @@ class EmailService {
 
   // EmailJS hesabında "strict mode" (Account > Security > Allow API calls
   // from non-browser applications) açık olduğu için tarayıcı dışı
-  // çağrılarda (mobil uygulama gibi) bu Private Key zorunlu. .env'den
-  // okunsa da derlenen uygulamaya gömüldüğü için tersine mühendislikle
-  // çıkarılabilir; en kötü ihtimalle EmailJS günlük gönderim kotası
-  // kötüye kullanılır (hesap ele geçirilmez). Bilinçli kabul edilmiş bir
-  // risk — .env'den okunması sadece bunun GitHub'da görünmesini engeller.
+  // çağrılarda (mobil uygulama gibi) bu Private Key zorunlu. Uygulama
+  // koduna gömülü olduğundan tersine mühendislikle çıkarılabilir; en kötü
+  // ihtimalle EmailJS günlük gönderim kotası kötüye kullanılır (hesap ele
+  // geçirilmez). Bilinçli kabul edilmiş bir risk.
   String? get _privateKey => dotenv.env['EMAILJS_PRIVATE_KEY'];
 
   bool get isConfigured => _privateKey != null && _privateKey!.isNotEmpty;

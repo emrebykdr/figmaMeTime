@@ -63,7 +63,20 @@ class _LoginPhoneState extends State<LoginPhone> {
       _isChecking = true;
     });
 
-    final userData = await UserService().getUserByEmail(email);
+    Map<String, dynamic>? userData;
+    try {
+      userData = await UserService().getUserByEmail(email);
+    } catch (e) {
+      // Firestore çağrısı hata fırlatırsa (ağ, yanlış yapılandırma vb.)
+      // önceden sessizce yutuluyordu — buton basılmış gibi görünüp hiçbir
+      // şey olmuyordu. Artık gerçek hata kullanıcıya gösteriliyor.
+      if (!mounted) return;
+      setState(() {
+        _isChecking = false;
+        _errorText = 'Something went wrong: $e';
+      });
+      return;
+    }
     if (!mounted) return;
 
     if (userData == null) {
@@ -92,11 +105,23 @@ class _LoginPhoneState extends State<LoginPhone> {
     // login_phone_code.dart bu kodu watchUserByPhone ile zaten canlı dinliyor.
     if (userId != null) {
       final code = await UserService().issueLoginCode(userId);
-      await EmailService().sendLoginCode(
+      final sent = await EmailService().sendLoginCode(
         toEmail: email,
         toName: fullName ?? '',
         code: code,
       );
+      if (!mounted) return;
+      // Gönderim başarısız olursa (yanlış key, kota, ağ hatası) kullanıcı
+      // hiç haberi olmadan asla gelmeyecek bir emaili beklemesin diye
+      // burada durduruluyor; admin panelindeki master kod ile de girebilir.
+      if (!sent) {
+        setState(() {
+          _isChecking = false;
+          _errorText =
+              "We couldn't send the code to your email. Please try again or contact the salon.";
+        });
+        return;
+      }
     }
     if (!mounted) return;
 

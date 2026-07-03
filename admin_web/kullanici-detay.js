@@ -34,6 +34,7 @@ const phoneEl = document.getElementById("edit-phone");
 const emailEl = document.getElementById("edit-email");
 const createdEl = document.getElementById("edit-created");
 const formStatusEl = document.getElementById("user-form-status");
+const verifyBadgeEl = document.getElementById("verify-status-badge");
 const restrictBtnEl = document.getElementById("restrict-btn");
 const restrictBadgeEl = document.getElementById("restrict-status-badge");
 const blockBtnEl = document.getElementById("block-btn");
@@ -46,6 +47,15 @@ let currentUser = null;
 function formatDate(timestamp) {
   if (!timestamp?.toDate) return "-";
   return timestamp.toDate().toLocaleDateString("tr-TR");
+}
+
+// Kullanıcı mobil tarafta (Hesap Ayarları -> "Verify this email") email'ini
+// doğruladıysa bunu buradan da görebilmek için (bkz. UserService.
+// confirmEmailVerification -> users/{id}.emailVerified).
+function renderVerifyState() {
+  const isVerified = currentUser.emailVerified === true;
+  verifyBadgeEl.textContent = isVerified ? "Email Doğrulanmış" : "Email Doğrulanmamış";
+  verifyBadgeEl.className = `status-badge ${isVerified ? "upcoming" : "past"}`;
 }
 
 function renderRestrictState() {
@@ -83,6 +93,7 @@ async function loadUser() {
   phoneEl.value = currentUser.phone ?? "";
   emailEl.value = currentUser.email ?? "-";
   createdEl.value = formatDate(currentUser.createdAt);
+  renderVerifyState();
   renderRestrictState();
   renderBlockState();
 }

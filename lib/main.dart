@@ -13,7 +13,8 @@ void main() async {
   // Firebase gibi native servisleri kullanmadan önce Flutter'ın hazır olmasını garanti eder.
   WidgetsFlutterBinding.ensureInitialized();
   // EmailJS Private Key gibi sırları .env'den okur (.env gitignore'da,
-  // GitHub'a gitmiyor; bkz. .env.example).
+  // GitHub'a gitmiyor; bkz. .env.example). Ekstra bir çalıştırma bayrağı
+  // gerekmez, normal 'flutter run' yeterlidir.
   await dotenv.load(fileName: ".env");
   // Firebase'i (Firestore, Auth vs. için) başlatır. firebase_options.dart platforma göre ayarları verir.
   await Firebase.initializeApp(

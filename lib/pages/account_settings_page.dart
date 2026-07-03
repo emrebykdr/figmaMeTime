@@ -5,6 +5,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/services/user_service.dart';
+import 'package:figmaap/services/email_service.dart';
 
 class AccountSettingsPage extends StatefulWidget {
   const AccountSettingsPage({super.key});
@@ -17,10 +18,21 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _verificationCodeController = TextEditingController();
 
   bool _isLoading = true;
   bool _isSaving = false;
   String? _statusText;
+
+  // Email doğrulama: bir kez doğrulanmış email başka bir hesapla tekrar
+  // kayıt olurken kullanılamaz (bkz. UserService.isEmailVerifiedElsewhere,
+  // sign_up.dart'taki kontrol).
+  bool _isEmailVerified = false;
+  String? _verifiedEmail;
+  bool _isSendingVerification = false;
+  bool _isConfirmingCode = false;
+  bool _showCodeField = false;
+  String? _verificationStatusText;
 
   @override
   void initState() {
@@ -40,7 +52,68 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       _nameController.text = user?['fullName'] as String? ?? '';
       _emailController.text = user?['email'] as String? ?? '';
       _phoneController.text = user?['phone'] as String? ?? '';
+      _isEmailVerified = user?['emailVerified'] == true;
+      _verifiedEmail = user?['email'] as String?;
       _isLoading = false;
+    });
+  }
+
+  bool get _emailMatchesVerified =>
+      _isEmailVerified && _emailController.text.trim() == _verifiedEmail;
+
+  Future<void> _onVerifyEmailTap() async {
+    final email = _emailController.text.trim();
+    final userId = UserService.currentUserId;
+    if (email.isEmpty || userId == null) return;
+
+    setState(() {
+      _isSendingVerification = true;
+      _verificationStatusText = null;
+    });
+
+    final code = await UserService().issueEmailVerificationCode(userId);
+    final sent = await EmailService().sendLoginCode(
+      toEmail: email,
+      toName: _nameController.text.trim(),
+      code: code,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _isSendingVerification = false;
+      _showCodeField = true;
+      _verificationStatusText = sent
+          ? 'Verification code sent to $email.'
+          : "Couldn't send the code. Please try again.";
+    });
+  }
+
+  Future<void> _onConfirmVerificationTap() async {
+    final userId = UserService.currentUserId;
+    final code = _verificationCodeController.text.trim();
+    if (userId == null || code.length != 5) return;
+
+    setState(() {
+      _isConfirmingCode = true;
+    });
+
+    final verified = await UserService().confirmEmailVerification(
+      userId,
+      code,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _isConfirmingCode = false;
+      if (verified) {
+        _isEmailVerified = true;
+        _verifiedEmail = _emailController.text.trim();
+        _showCodeField = false;
+        _verificationCodeController.clear();
+        _verificationStatusText = 'Email verified.';
+      } else {
+        _verificationStatusText = 'Invalid or expired code.';
+      }
     });
   }
 
@@ -61,11 +134,25 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       _statusText = null;
     });
 
-    await UserService().updateProfile(fullName: name, email: email, phone: phone);
+    // Doğrulanmış email farklı bir değere değiştirildiyse, eski doğrulama
+    // yeni email için geçerli sayılmamalı.
+    final emailChanged = _isEmailVerified && email != _verifiedEmail;
+    await UserService().updateProfile(
+      fullName: name,
+      email: email,
+      phone: phone,
+      resetEmailVerification: emailChanged,
+    );
     if (!mounted) return;
     setState(() {
       _isSaving = false;
       _statusText = 'Saved.';
+      if (emailChanged) {
+        _isEmailVerified = false;
+        _verifiedEmail = null;
+        _showCodeField = false;
+        _verificationStatusText = null;
+      }
     });
   }
 
@@ -74,6 +161,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _verificationCodeController.dispose();
     super.dispose();
   }
 
@@ -123,7 +211,9 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                           hint: 'Enter your email',
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          onChanged: (_) => setState(() {}),
                         ),
+                        _buildEmailVerificationSection(r),
                         SizedBox(height: r.h(16)),
                         AppTextField(
                           label: 'Phone Number',
@@ -153,6 +243,103 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmailVerificationSection(Responsive r) {
+    if (_emailMatchesVerified) {
+      return Padding(
+        padding: EdgeInsets.only(top: r.h(6)),
+        child: Row(
+          children: [
+            Icon(Icons.verified, size: r.w(16), color: Colors.green),
+            SizedBox(width: r.w(4)),
+            Text(
+              'Verified',
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w600,
+                fontSize: r.sp(12),
+                color: Colors.green,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(top: r.h(6)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: _isSendingVerification ? null : _onVerifyEmailTap,
+            child: Text(
+              _isSendingVerification ? 'Sending code...' : 'Verify this email',
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w600,
+                fontSize: r.sp(12),
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          if (_showCodeField) ...[
+            SizedBox(height: r.h(8)),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _verificationCodeController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 5,
+                    style: TextStyle(fontFamily: 'Raleway', fontSize: r.sp(14)),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      isDense: true,
+                      hintText: 'Enter code',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: r.w(10),
+                        vertical: r.h(10),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(r.r(8)),
+                        borderSide: const BorderSide(color: Color(0xFFCDCDCD)),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: r.w(8)),
+                TextButton(
+                  onPressed: _isConfirmingCode ? null : _onConfirmVerificationTap,
+                  child: Text(
+                    _isConfirmingCode ? '...' : 'Confirm',
+                    style: TextStyle(
+                      fontFamily: 'Raleway',
+                      fontWeight: FontWeight.w600,
+                      fontSize: r.sp(13),
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_verificationStatusText != null) ...[
+            SizedBox(height: r.h(4)),
+            Text(
+              _verificationStatusText!,
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w500,
+                fontSize: r.sp(11),
+                color: AppColors.tertiary,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

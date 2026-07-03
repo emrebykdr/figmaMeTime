@@ -9,16 +9,16 @@ import 'package:figmaap/pages/professionals_calendar.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/pages/main_page.dart';
 import 'package:figmaap/services/user_service.dart';
+import 'package:figmaap/services/email_service.dart';
 
 class LoginPhoneCode extends StatefulWidget {
   final String phoneNumber;
   final Map<String, dynamic>? professional;
   final bool noPreference;
-  final bool isSignUp;
   // Kod doğrulandıktan sonra doğrudan MainPage'e gidilsin mi (booking akışı
-  // seçimini atla). isSignUp'tan bağımsız: gerçek hesabı olan bir kullanıcı
-  // "Skip" ile buraya gelebilir, bu durumda demo kod değil kendi gerçek
-  // (email'e gönderilen) kodunu girmesi gerekir, sadece varış sayfası değişir.
+  // seçimini atla). Hem yeni kayıt olan (sign_up.dart) hem de "Skip" ile
+  // gelen kullanıcılar için true olur; her ikisi de kendi email'ine
+  // gönderilen gerçek kodu girer, sadece varış sayfası değişir.
   final bool skipToMain;
   final String selectedService;
   final String selectedPrice;
@@ -28,7 +28,6 @@ class LoginPhoneCode extends StatefulWidget {
     required this.phoneNumber,
     this.professional,
     this.noPreference = false,
-    this.isSignUp = false,
     this.skipToMain = false,
     this.selectedService = 'Basic Manicure',
     this.selectedPrice = '\$30',
@@ -45,12 +44,17 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   );
   final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
 
+  static const int _resendCooldownSeconds = 3 * 60;
+
   late Timer _timer;
-  int _remainingSeconds = 20;
+  int _remainingSeconds = _resendCooldownSeconds;
+  bool _isResending = false;
 
   String? _expectedCode;
   int? _expectedCodeExpiresAt;
+  String? _userId;
   String? _userEmail;
+  String? _userFullName;
   String? _errorText;
   StreamSubscription<Map<String, dynamic>?>? _userSub;
 
@@ -66,11 +70,10 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     _listenForMasterCode();
   }
 
-  // Admin panelinden (kullanici-detay.html -> "Kod Oluştur") üretilen kod
-  // artık kullanıcının email adresine gönderiliyor (Gmail API), SMS değil.
-  // Tek seferlik sorgu yerine canlı dinleniyor: kullanıcı bu ekrandayken
-  // admin kodu yeniden oluşturursa, ekran yeniden açılmadan _expectedCode
-  // anında güncellenir.
+  // login_phone.dart'ta email girilince otomatik üretilen kişisel kod
+  // kullanıcının email adresine gönderiliyor. Tek seferlik sorgu yerine
+  // canlı dinleniyor: örneğin "Send code again" ile yeni bir kod üretilirse,
+  // ekran yeniden açılmadan _expectedCode anında güncellenir.
   void _listenForExpectedCode() {
     _userSub = UserService().watchUserByPhone(widget.phoneNumber).listen((
       userData,
@@ -79,7 +82,9 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
       setState(() {
         _expectedCode = userData?['loginCode'] as String?;
         _expectedCodeExpiresAt = userData?['loginCodeExpiresAt'] as int?;
+        _userId = userData?['id'] as String?;
         _userEmail = userData?['email'] as String?;
+        _userFullName = userData?['fullName'] as String?;
       });
     });
   }
@@ -98,7 +103,7 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   }
 
   void _startTimer() {
-    _remainingSeconds = 20;
+    _remainingSeconds = _resendCooldownSeconds;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
         setState(() {
@@ -140,57 +145,41 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
     _checkCode();
   }
 
+  // Dashboard'dan üretilen evrensel master kod, süresi dolmadığı sürece
+  // hangi hesap olursa olsun kişisel kod yerine geçer.
+  bool get _isMasterCodeValid {
+    final expiresAt = _masterCodeExpiresAt;
+    if (_masterCode == null || expiresAt == null) return false;
+    return DateTime.now().millisecondsSinceEpoch <= expiresAt;
+  }
+
   void _checkCode() async {
     final code = _controllers.map((c) => c.text).join();
     if (code.length != 5) return;
 
-    // Yeni kayıt olan kullanıcının henüz admin tarafından üretilmiş bir
-    // loginCode'u yoktur (admin panelinde "Kod Oluştur" sadece mevcut bir
-    // kullanıcı üzerinde çalışır). Kayıt akışını tıkamamak için bu durumda
-    // sabit demo kodu (12345) kabul edilir; normal girişte (isSignUp=false)
-    // hâlâ admin'in ürettiği gerçek kod gerekiyor.
-    if (widget.isSignUp) {
-      if (code != '12345') {
-        setState(() {
-          _errorText = 'Invalid code';
-        });
-        return;
-      }
-    } else {
-      final now = DateTime.now().millisecondsSinceEpoch;
+    final masterValid = code == _masterCode && _isMasterCodeValid;
+    final now = DateTime.now().millisecondsSinceEpoch;
 
-      // Dashboard'dan üretilen evrensel master kod, süresi dolmadığı sürece
-      // hangi hesap olursa olsun kişisel kod yerine geçer.
-      final masterValid =
-          _masterCode != null &&
-          code == _masterCode &&
-          _masterCodeExpiresAt != null &&
-          now <= _masterCodeExpiresAt!;
+    final codeMatches = _expectedCode != null && code == _expectedCode;
+    if (!masterValid && !codeMatches) {
+      setState(() {
+        _errorText = 'Invalid code';
+      });
+      return;
+    }
 
-      final codeMatches = _expectedCode != null && code == _expectedCode;
-      if (!masterValid && !codeMatches) {
-        setState(() {
-          _errorText = 'Invalid code';
-        });
-        return;
-      }
-
-      // Kod eşleşse bile süresi (10 dk, loginCodeExpiresAt) dolmuşsa kabul
-      // edilmez — admin panelinin açık olması (ve otomatik yenileme
-      // sayacının çalışması) garanti olmadığı için bu kontrol istemci
-      // tarafında da ayrıca yapılıyor, yalnızca panele güvenilmiyor. Master
-      // kod zaten geçerliyse (masterValid) bu ek kontrole gerek yok.
-      final expiresAt = _expectedCodeExpiresAt;
-      final isExpired =
-          !masterValid &&
-          expiresAt != null &&
-          now > expiresAt;
-      if (isExpired) {
-        setState(() {
-          _errorText = 'This code has expired. Please request a new one.';
-        });
-        return;
-      }
+    // Kod eşleşse bile süresi (10 dk, loginCodeExpiresAt) dolmuşsa kabul
+    // edilmez — admin panelinin açık olması (ve otomatik yenileme
+    // sayacının çalışması) garanti olmadığı için bu kontrol istemci
+    // tarafında da ayrıca yapılıyor, yalnızca panele güvenilmiyor. Master
+    // kod zaten geçerliyse (masterValid) bu ek kontrole gerek yok.
+    final expiresAt = _expectedCodeExpiresAt;
+    final isExpired = !masterValid && expiresAt != null && now > expiresAt;
+    if (isExpired) {
+      setState(() {
+        _errorText = 'This code has expired. Please request a new one.';
+      });
+      return;
     }
 
     setState(() {
@@ -199,7 +188,7 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
 
     await UserService().loginUser(phone: widget.phoneNumber);
     if (!mounted) return;
-    if (widget.isSignUp || widget.skipToMain) {
+    if (widget.skipToMain) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainPage()),
@@ -233,6 +222,39 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
         ),
       );
     }
+  }
+
+  // "Send code again": yeni bir kod üretip yeniden EmailJS ile gönderir;
+  // daha önce sadece görsel sayacı sıfırlayıp hiçbir şey göndermiyordu.
+  Future<void> _onResendTap() async {
+    if (_remainingSeconds != 0 || _isResending) return;
+
+    if (_userId == null || _userEmail == null) {
+      _startTimer();
+      setState(() {});
+      return;
+    }
+
+    setState(() {
+      _isResending = true;
+      _errorText = null;
+    });
+
+    final code = await UserService().issueLoginCode(_userId!);
+    final sent = await EmailService().sendLoginCode(
+      toEmail: _userEmail!,
+      toName: _userFullName ?? '',
+      code: code,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _isResending = false;
+      _errorText = sent
+          ? null
+          : "We couldn't resend the code. Please try again.";
+    });
+    _startTimer();
   }
 
   @override
@@ -312,21 +334,6 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
   }
 
   Widget _buildSubtitle(Responsive r) {
-    // Kayıt akışında (isSignUp) henüz gönderilen gerçek bir kod yok (bkz.
-    // _checkCode'daki demo kod notu), bu yüzden farklı bir metin gösteriliyor.
-    if (widget.isSignUp) {
-      return Text(
-        'Enter the demo code below to complete your registration.',
-        style: TextStyle(
-          fontFamily: 'Raleway',
-          fontWeight: FontWeight.w500,
-          fontSize: r.sp(16),
-          height: 1.25,
-          color: AppColors.tertiary,
-        ),
-      );
-    }
-
     return RichText(
       text: TextSpan(
         style: TextStyle(
@@ -402,14 +409,11 @@ class _LoginPhoneCodeState extends State<LoginPhoneCode> {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: _remainingSeconds == 0
-                ? () {
-                    _startTimer();
-                    setState(() {});
-                  }
+            onTap: _remainingSeconds == 0 && !_isResending
+                ? _onResendTap
                 : null,
             child: Text(
-              'Send code again',
+              _isResending ? 'Sending...' : 'Send code again',
               style: TextStyle(
                 fontFamily: 'Raleway',
                 fontWeight: FontWeight.w600,

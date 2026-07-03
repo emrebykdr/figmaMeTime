@@ -56,46 +56,43 @@ class _MainPageState extends State<MainPage> {
     },
   ];
 
-  StreamSubscription<bool>? _blockedSub;
+  StreamSubscription<Map<String, dynamic>?>? _profileSub;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    _loadUserName();
-    _listenForAccountBlocked();
+    _listenForProfileChanges();
     NotificationService().checkTodayReminders();
   }
 
-  // Admin panelden hesap engellendiğinde, uygulama açıkken bile anında
-  // oturumu kapatıp giriş ekranına döner (main.dart'taki kontrol sadece
+  // Kullanıcının kendi dokümanını canlı dinler: hem Hesap Ayarları'ndan
+  // (veya admin panelinden) isim değişirse "Hello, İsim" anında güncellenir,
+  // hem de admin panelden hesap engellenirse uygulama açıkken bile anında
+  // oturum kapatılıp giriş ekranına dönülür (main.dart'taki kontrol sadece
   // uygulama yeniden başladığında çalışıyor, bu ek olarak canlı dinliyor).
-  void _listenForAccountBlocked() {
-    _blockedSub = UserService().watchAccountBlocked().listen((blocked) async {
-      if (!blocked) return;
-      await UserService.logout();
+  void _listenForProfileChanges() {
+    _profileSub = UserService().watchCurrentUser().listen((data) async {
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (route) => false,
-      );
-    });
-  }
 
-  Future<void> _loadUserName() async {
-    if (UserService.currentUserName != null && UserService.currentUserName!.isNotEmpty) {
-      setState(() {
-        _userName = UserService.currentUserName!;
-      });
-    } else if (UserService.currentUserId != null) {
-      final user = await UserService().getUserById(UserService.currentUserId!);
-      if (user != null && user['fullName'] != null && (user['fullName'] as String).isNotEmpty) {
+      if (data?['accountBlocked'] == true) {
+        await UserService.logout();
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+          (route) => false,
+        );
+        return;
+      }
+
+      final fullName = data?['fullName'] as String?;
+      if (fullName != null && fullName.isNotEmpty && fullName != _userName) {
         setState(() {
-          _userName = user['fullName'];
+          _userName = fullName;
         });
       }
-    }
+    });
   }
 
   List<Map<String, String>> get _filteredServices {
@@ -108,7 +105,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void dispose() {
     _searchController.dispose();
-    _blockedSub?.cancel();
+    _profileSub?.cancel();
     super.dispose();
   }
 

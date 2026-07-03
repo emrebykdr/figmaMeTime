@@ -325,6 +325,7 @@ const newSubmitBtnEl = document.getElementById("new-submit-btn");
 const newCancelBtnEl = document.getElementById("new-cancel-btn");
 const newFormStatusEl = document.getElementById("new-form-status");
 let editingBookingId = null;
+let editingOriginalStatus = null;
 
 TIME_SLOTS.forEach((time) => {
   const option = document.createElement("option");
@@ -425,6 +426,7 @@ document.addEventListener("click", (e) => {
 
 function resetNewBookingForm() {
   editingBookingId = null;
+  editingOriginalStatus = null;
   newBookingFormEl.reset();
   newUserOptionsEl.hidden = true;
   newFormTitleEl.textContent = "Yeni Randevu";
@@ -434,6 +436,7 @@ function resetNewBookingForm() {
 
 function startEdit(booking) {
   editingBookingId = booking.id;
+  editingOriginalStatus = booking.status ?? null;
   const user = allUsers.find((u) => u.id === booking.userId);
   newUserEl.value = booking.userId ?? "";
   newUserSearchEl.value = user ? userLabel(user) : "";
@@ -487,6 +490,13 @@ newBookingFormEl.addEventListener("submit", async (e) => {
 
   if (editingBookingId) {
     await updateDoc(doc(db, "bookings", editingBookingId), data);
+    // Sadece Onay Kuyruğu/Tüm Randevular'daki Onayla/İptal butonları değil,
+    // bu formdan statü değişikliği yapılırsa da müşteri bildirim alsın.
+    // Statü değişmediyse (sadece saat/uzman vb. düzenlendiyse) tekrar
+    // bildirim oluşturulmasın diye önceki statüyle karşılaştırılıyor.
+    if (data.status !== editingOriginalStatus) {
+      await notifyBookingStatusChange(db, editingBookingId, data.status);
+    }
     newFormStatusEl.textContent = "Randevu güncellendi.";
   } else {
     const docRef = doc(collection(db, "bookings"));
