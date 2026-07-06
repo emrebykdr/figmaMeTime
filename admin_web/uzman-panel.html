@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uzman Paneli - MeTime</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main">
+      <header class="topbar">
+        <span id="professional-name" class="page-title" style="font-size: 16px;"></span>
+        <div class="topbar-actions">
+          <button id="logout-btn" class="secondary-btn">Çıkış</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <h1 class="page-title">Uzman Paneli</h1>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="bookings">Randevularım</button>
+          <button class="tab-btn" data-tab="leave">İzin Talebi</button>
+        </div>
+
+        <section class="card tab-panel" data-panel="bookings">
+          <div class="card-header">
+            <h2>Gelecek Randevular</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Müşteri</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="upcoming-body">
+              <!-- uzman-panel.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card tab-panel" data-panel="bookings">
+          <div class="card-header">
+            <h2>Geçmiş Randevular</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Müşteri</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="past-body">
+              <!-- uzman-panel.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card tab-panel" data-panel="leave" hidden>
+          <div class="card-header">
+            <h2>İzin Talebi</h2>
+          </div>
+          <form id="leave-form" class="booking-form">
+            <label>
+              Tarih
+              <input type="date" id="leave-date" required />
+            </label>
+            <label>
+              Not (opsiyonel)
+              <input type="text" id="leave-reason" placeholder="Örn. sağlık, tatil..." />
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="approve-btn">Talep Gönder</button>
+            </div>
+            <p id="leave-form-status" class="status"></p>
+          </form>
+
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th>Not</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="leave-requests-body">
+              <!-- uzman-panel.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="uzman-panel.js?v=4"></script>
+</body>
+</html>

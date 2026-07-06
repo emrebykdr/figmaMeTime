@@ -42,6 +42,28 @@
 
         <section class="card">
           <div class="card-header">
+            <h2>İzin Talepleri</h2>
+            <p id="leave-status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Uzman</th>
+                <th>Şube</th>
+                <th>Tarih</th>
+                <th>Not</th>
+                <th>Durum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="leave-requests-body">
+              <!-- uzmanlar.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
             <h2 id="form-title">Yeni Uzman</h2>
           </div>
 
@@ -120,6 +142,6 @@
     </div>
   </div>
 
-  <script type="module" src="uzmanlar.js?v=6"></script>
+  <script type="module" src="uzmanlar.js?v=10"></script>
 </body>
 </html>

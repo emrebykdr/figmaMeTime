@@ -1,6 +1,6 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
-import { requireLogin } from "./shared/auth.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=5";
+import { requireLogin } from "./shared/auth.js?v=4";
 import { attachCombobox } from "./shared/combobox.js?v=2";
 import {
   collection,
@@ -10,6 +10,9 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  arrayUnion,
+  query,
+  where,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 requireLogin();
@@ -226,7 +229,26 @@ deleteBtnEl.addEventListener("click", async () => {
   if (prof) await deleteProfessional(prof);
 });
 
+// Bir uzman silindiğinde, ona ait bekleyen izin talepleri Firestore'da öylece
+// kalmasın diye önce kontrol edilir; varsa silme engellenir. Aksi halde
+// "İzin Talepleri" listesinde bu taleplerden biri onaylanmaya çalışıldığında
+// var olmayan bir professionals/{id} dokümanına updateDoc çağrılır ve hata
+// fırlatır (bkz. approveLeaveRequest).
 async function deleteProfessional(prof) {
+  const pendingSnap = await getDocs(
+    query(
+      collection(db, "leaveRequests"),
+      where("professionalId", "==", prof.id),
+      where("status", "==", "pending")
+    )
+  );
+  if (!pendingSnap.empty) {
+    window.alert(
+      `Bu uzmana ait ${pendingSnap.size} bekleyen izin talebi var. Önce onları onayla/reddet, sonra sil.`
+    );
+    return;
+  }
+
   const ok = window.confirm(`${prof.name ?? "Bu uzmanı"} silmek istediğine emin misin?`);
   if (!ok) return;
   await deleteDoc(doc(db, "professionals", prof.id));
@@ -283,5 +305,76 @@ formEl.addEventListener("submit", async (e) => {
   }
 });
 
+// --- İzin Talepleri: uzman-panel.html'den gönderilen talepler burada
+// onaylanır/reddedilir. Onaylanan tarih, uzmanın daysOff listesine eklenir
+// (arrayUnion) — böylece hem buradaki hem mobil müsaitlik hesabı otomatik
+// güncellenir; ayrı bir sayfa yerine bilerek bu sayfanın bir parçası.
+const LEAVE_STATUS_LABELS = { pending: "Bekliyor", approved: "Onaylandı", rejected: "Reddedildi" };
+const leaveStatusEl = document.getElementById("leave-status");
+const leaveRequestsBodyEl = document.getElementById("leave-requests-body");
+
+function renderLeaveRequests(requests) {
+  leaveRequestsBodyEl.innerHTML = "";
+  if (requests.length === 0) {
+    leaveStatusEl.textContent = "Henüz izin talebi yok.";
+    return;
+  }
+  leaveStatusEl.textContent = `${requests.length} talep.`;
+
+  requests.forEach((request) => {
+    const row = document.createElement("tr");
+    const isPending = request.status === "pending";
+    const badgeClass = request.status === "approved" ? "upcoming" : request.status === "rejected" ? "cancelled" : "waiting";
+    const label = LEAVE_STATUS_LABELS[request.status] ?? request.status ?? "";
+    row.innerHTML = `
+      <td>${request.professionalName ?? ""}</td>
+      <td>${salonNameById[request.salonId] ?? ""}</td>
+      <td>${request.date ?? ""}</td>
+      <td>${request.reason ?? ""}</td>
+      <td><span class="status-badge ${badgeClass}">${label}</span></td>
+      <td class="row-actions">
+        ${isPending ? '<button class="approve-btn">Onayla</button>' : ""}
+        ${isPending ? '<button class="reject-btn">Reddet</button>' : ""}
+      </td>
+    `;
+
+    const approveBtn = row.querySelector(".approve-btn");
+    if (approveBtn) approveBtn.addEventListener("click", () => approveLeaveRequest(request));
+    const rejectBtn = row.querySelector(".reject-btn");
+    if (rejectBtn) rejectBtn.addEventListener("click", () => rejectLeaveRequest(request));
+
+    leaveRequestsBodyEl.appendChild(row);
+  });
+}
+
+async function approveLeaveRequest(request) {
+  await updateDoc(doc(db, "professionals", request.professionalId), {
+    daysOff: arrayUnion(request.date),
+  });
+  await updateDoc(doc(db, "leaveRequests", request.id), { status: "approved" });
+  await Promise.all([loadLeaveRequests(), loadProfessionals()]);
+}
+
+async function rejectLeaveRequest(request) {
+  await updateDoc(doc(db, "leaveRequests", request.id), { status: "rejected" });
+  await loadLeaveRequests();
+}
+
+async function loadLeaveRequests() {
+  leaveStatusEl.textContent = "Yükleniyor...";
+  const snapshot = await getDocs(collection(db, "leaveRequests"));
+  const requests = snapshot.docs
+    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    .sort((a, b) => {
+      // Bekleyenler üstte, aralarında da tarihe göre.
+      if (a.status === "pending" && b.status !== "pending") return -1;
+      if (a.status !== "pending" && b.status === "pending") return 1;
+      return (b.date ?? "").localeCompare(a.date ?? "");
+    });
+  renderLeaveRequests(requests);
+}
+
 resetForm();
-loadSalonOptions().then(loadProfessionals);
+loadSalonOptions()
+  .then(loadProfessionals)
+  .then(loadLeaveRequests);

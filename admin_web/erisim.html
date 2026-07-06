@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giriş Bilgileri - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <h1 class="page-title">Giriş Bilgileri</h1>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Admin Girişi</h2>
+          </div>
+          <form id="admin-form" class="booking-form">
+            <label>
+              E-posta
+              <input type="email" id="admin-email" required />
+            </label>
+            <label>
+              Şifre
+              <input type="text" id="admin-password" required />
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="approve-btn">Kaydet</button>
+            </div>
+            <p id="admin-form-status" class="status"></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Uzman Girişleri</h2>
+            <p id="list-status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>E-posta</th>
+                <th>Şifre</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="professionals-body">
+              <!-- erisim.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="erisim.js?v=2"></script>
+</body>
+</html>

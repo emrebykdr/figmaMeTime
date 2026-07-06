@@ -1,6 +1,6 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
-import { requireLogin } from "./shared/auth.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=5";
+import { requireLogin } from "./shared/auth.js?v=4";
 import { generateMasterCode, getMasterCode, formatRemaining } from "./shared/loginCode.js?v=4";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 

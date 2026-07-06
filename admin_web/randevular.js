@@ -1,6 +1,6 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
-import { requireLogin } from "./shared/auth.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=5";
+import { requireLogin } from "./shared/auth.js?v=4";
 import { PAGE_SIZE, renderPagination } from "./shared/pagination.js?v=2";
 import { effectiveStatus } from "./shared/bookingStatus.js?v=2";
 import { notifyBookingStatusChange } from "./shared/notifications.js?v=1";

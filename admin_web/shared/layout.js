@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { key: "uzmanlar", href: "uzmanlar.html", label: "Uzmanlar" },
   { key: "hizmetler", href: "hizmetler.html", label: "Hizmetler" },
   { key: "salonlar", href: "salonlar.html", label: "Salon Bilgileri" },
+  { key: "erisim", href: "erisim.html", label: "Giriş Bilgileri" },
 ];
 
 export function mountSidebar(containerId, activeKey) {
