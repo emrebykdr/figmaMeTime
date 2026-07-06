@@ -9,6 +9,7 @@ class BookingService {
   /// Her randevu, kendi Firestore doküman ID'si ile eşleşen bir 'bookingId'
   /// alanıyla oluşturulur (userId'nin users koleksiyonunda tutulma şekliyle aynı desen).
   Future<String> addBooking({
+    required String salonId,
     required String salon,
     required String professional,
     required String service,
@@ -30,6 +31,7 @@ class BookingService {
     final docRef = _firestore.collection('bookings').doc();
     await docRef.set({
       'bookingId': docRef.id,
+      'salonId': salonId,
       'salon': salon,
       'professional': professional,
       'service': service,
@@ -84,18 +86,22 @@ class BookingService {
     });
   }
 
-  /// Belirli bir uzman ve tarih için dolu sayılan saatleri döner: hem onay
-  /// bekleyen (waiting) hem de onaylanmış (upcoming) randevular dahildir.
+  /// Belirli bir şube, uzman ve tarih için dolu sayılan saatleri döner: hem
+  /// onay bekleyen (waiting) hem de onaylanmış (upcoming) randevular dahildir.
   /// Böylece aynı uzman/saat için birden fazla waiting kaydı oluşup admin
   /// tarafında çakışma yaratılması, kaynağında (booking ekranında) engellenir.
-  /// Randevu alma ekranında bu saatler seçilemez hale getirilir.
+  /// salonId filtresi, farklı şubelerdeki aynı isimli uzmanların dolu
+  /// saatlerinin birbirine karışmasını önler. Randevu alma ekranında bu
+  /// saatler seçilemez hale getirilir.
   Future<Set<String>> getBookedTimes({
+    required String salonId,
     required String professional,
     required String date,
   }) async {
     final snapshot = await _firestore
         .collection('bookings')
         .where('status', whereIn: ['waiting', 'upcoming'])
+        .where('salonId', isEqualTo: salonId)
         .where('professional', isEqualTo: professional)
         .where('date', isEqualTo: date)
         .get();

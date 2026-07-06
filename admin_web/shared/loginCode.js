@@ -1,4 +1,4 @@
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 export const CODE_LIFETIME_MS = 10 * 60 * 1000;
 
@@ -29,4 +29,18 @@ export async function generateMasterCode(db) {
   const expiresAt = Date.now() + CODE_LIFETIME_MS;
   await setDoc(doc(db, "adminConfig", "masterCode"), { code, expiresAt });
   return { code, expiresAt };
+}
+
+/**
+ * Halihazırda yazılmış master kodu (varsa) döner. Dashboard açılışında
+ * süresi dolmamış bir kod varsa onu tekrar göstermek için kullanılır —
+ * her sayfa açılışında gereksiz yere yeni kod üretilip eski kod geçersiz
+ * kılınmasın diye.
+ *
+ * @param {object} db Firestore instance
+ * @returns {Promise<{code: string, expiresAt: number} | null>}
+ */
+export async function getMasterCode(db) {
+  const snapshot = await getDoc(doc(db, "adminConfig", "masterCode"));
+  return snapshot.exists() ? snapshot.data() : null;
 }

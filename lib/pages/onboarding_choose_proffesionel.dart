@@ -11,6 +11,8 @@ import 'package:figmaap/widgets/error_retry.dart';
 import 'package:figmaap/pages/professionals_calendar.dart';
 import 'package:figmaap/pages/proffessionals_no_preference.dart';
 import 'package:figmaap/services/professional_service.dart';
+import 'package:figmaap/services/salon_service.dart';
+import 'package:figmaap/pages/account_settings_page.dart';
 
 class OnboardingChooseProfessional extends StatefulWidget {
   final bool isLoggedIn;
@@ -35,6 +37,7 @@ class _OnboardingChooseProfessionalState
   List<Map<String, dynamic>> _professionals = [];
   bool _loading = true;
   String? _error;
+  bool _noSalonSelected = false;
 
   @override
   void initState() {
@@ -46,9 +49,20 @@ class _OnboardingChooseProfessionalState
     setState(() {
       _loading = true;
       _error = null;
+      _noSalonSelected = false;
     });
+    final salonId = SalonService.currentSalonId;
+    if (salonId == null) {
+      setState(() {
+        _noSalonSelected = true;
+        _loading = false;
+      });
+      return;
+    }
     try {
-      final professionals = await ProfessionalService().getProfessionals();
+      final professionals = await ProfessionalService().getProfessionals(
+        salonId: salonId,
+      );
       if (!mounted) return;
       setState(() {
         _professionals = professionals;
@@ -82,6 +96,8 @@ class _OnboardingChooseProfessionalState
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
+                  : _noSalonSelected
+                  ? _buildNoSalonView(r)
                   : _error != null
                   ? ErrorRetryView(
                       message: _error!,
@@ -152,6 +168,47 @@ class _OnboardingChooseProfessionalState
             ),
             _buildNoPreference(r),
             SizedBox(height: r.h(40)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoSalonView(Responsive r) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: r.w(40)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Please choose a branch in Account Settings first.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w500,
+                fontSize: r.sp(14),
+                color: AppColors.tertiary,
+              ),
+            ),
+            SizedBox(height: r.h(16)),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+                );
+              },
+              child: Text(
+                'Go to Account Settings',
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  fontWeight: FontWeight.w600,
+                  fontSize: r.sp(14),
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
           ],
         ),
       ),

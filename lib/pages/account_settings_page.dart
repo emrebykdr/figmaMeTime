@@ -6,6 +6,8 @@ import 'package:figmaap/widgets/app_header.dart';
 import 'package:figmaap/widgets/text_field.dart';
 import 'package:figmaap/services/user_service.dart';
 import 'package:figmaap/services/email_service.dart';
+import 'package:figmaap/services/salon_service.dart';
+import 'package:figmaap/widgets/page_sheet.dart';
 
 class AccountSettingsPage extends StatefulWidget {
   const AccountSettingsPage({super.key});
@@ -34,10 +36,39 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   bool _showCodeField = false;
   String? _verificationStatusText;
 
+  // Giriş yapmış kullanıcı için şube seçimi burada bir kez yapılır; sonraki
+  // tüm randevu işlemleri (uzman/hizmet listesi, randevu oluşturma) otomatik
+  // olarak SalonService.currentSalonId'ye göre çalışır — randevu akışında
+  // ayrıca sorulmaz.
+  String? _salonId;
+  String? _salonName;
+  bool _isLoadingSalons = false;
+
   @override
   void initState() {
     super.initState();
+    _salonId = SalonService.currentSalonId;
+    _salonName = SalonService.currentSalonName;
     _loadUser();
+  }
+
+  Future<void> _onChangeSalonTap() async {
+    setState(() => _isLoadingSalons = true);
+    final salons = await SalonService().getSalons();
+    if (!mounted) return;
+    setState(() => _isLoadingSalons = false);
+
+    final selected = await SalonPickerSheet.show(context, salons, _salonId);
+    if (selected == null) return;
+
+    final id = selected['id'] as String;
+    final name = selected['name'] as String? ?? '';
+    await SalonService.selectSalon(id, name);
+    if (!mounted) return;
+    setState(() {
+      _salonId = id;
+      _salonName = name;
+    });
   }
 
   Future<void> _loadUser() async {
@@ -221,6 +252,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                         ),
+                        SizedBox(height: r.h(16)),
+                        _buildSalonSection(r),
                         if (_statusText != null) ...[
                           SizedBox(height: r.h(12)),
                           Text(
@@ -244,6 +277,57 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSalonSection(Responsive r) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Branch',
+          style: TextStyle(
+            fontFamily: 'Raleway',
+            fontWeight: FontWeight.w600,
+            fontSize: r.sp(13),
+            color: AppColors.tertiary,
+          ),
+        ),
+        SizedBox(height: r.h(6)),
+        GestureDetector(
+          onTap: _isLoadingSalons ? null : _onChangeSalonTap,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: r.w(16), vertical: r.h(14)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F6F6),
+              borderRadius: BorderRadius.circular(r.r(10)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _isLoadingSalons
+                        ? 'Loading...'
+                        : (_salonName?.isNotEmpty ?? false)
+                            ? _salonName!
+                            : 'Choose a branch',
+                    style: TextStyle(
+                      fontFamily: 'Raleway',
+                      fontWeight: FontWeight.w500,
+                      fontSize: r.sp(14),
+                      color: (_salonName?.isNotEmpty ?? false)
+                          ? AppColors.almostBlack
+                          : AppColors.tertiary,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: AppColors.tertiary, size: r.w(20)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

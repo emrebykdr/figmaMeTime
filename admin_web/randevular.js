@@ -1,9 +1,10 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
 import { requireLogin } from "./shared/auth.js?v=2";
 import { PAGE_SIZE, renderPagination } from "./shared/pagination.js?v=2";
 import { effectiveStatus } from "./shared/bookingStatus.js?v=2";
 import { notifyBookingStatusChange } from "./shared/notifications.js?v=1";
+import { attachCombobox } from "./shared/combobox.js?v=2";
 import {
   collection,
   query,
@@ -252,6 +253,7 @@ allStatusFilterEl.addEventListener("change", loadAllBookings);
 // aynı ("Fark etmez" akışındaki kısa isim tutarsızlığı ayrı bir konu).
 const TIME_SLOTS = ["10:00 am", "11:00 am", "01:30 pm", "03:00 pm", "05:00 pm", "07:00 pm"];
 
+const calendarSalonEl = document.getElementById("calendar-salon");
 const calendarProfessionalEl = document.getElementById("calendar-professional");
 const calendarDateEl = document.getElementById("calendar-date");
 const calendarStatusEl = document.getElementById("calendar-status");
@@ -268,18 +270,22 @@ function todayIso() {
 calendarDateEl.value = todayIso();
 
 async function loadCalendar() {
+  const salonIdFilter = calendarSalonEl.value;
   const professional = calendarProfessionalEl.value;
   const dateIso = calendarDateEl.value;
-  if (!dateIso) return;
+  if (!dateIso || !salonIdFilter) return;
 
   calendarStatusEl.textContent = "Yükleniyor...";
   calendarSlotsEl.innerHTML = "";
 
   // 'waiting' + 'upcoming' birlikte kontrol ediliyor: onay bekleyen bir
   // randevu bile o saati dolu göstermeli (mobildeki getBookedTimes ile aynı mantık).
+  // salonId filtresi olmadan, iki farklı şubede aynı isimli bir uzman varsa
+  // dolu saatler birbirine karışırdı — bu yüzden şube burada da zorunlu.
   const q = query(
     collection(db, "bookings"),
     where("status", "in", ["waiting", "upcoming"]),
+    where("salonId", "==", salonIdFilter),
     where("professional", "==", professional),
     where("dateIso", "==", dateIso)
   );
@@ -297,6 +303,7 @@ async function loadCalendar() {
   });
 }
 
+calendarSalonEl.addEventListener("change", loadCalendar);
 calendarProfessionalEl.addEventListener("change", loadCalendar);
 calendarDateEl.addEventListener("change", loadCalendar);
 
@@ -316,6 +323,10 @@ const newBookingFormEl = document.getElementById("new-booking-form");
 const newUserEl = document.getElementById("new-user");
 const newUserSearchEl = document.getElementById("new-user-search");
 const newUserOptionsEl = document.getElementById("user-options");
+const newSalonEl = document.getElementById("new-salon");
+const newSalonSearchEl = document.getElementById("new-salon-search");
+const newSalonComboboxEl = document.getElementById("new-salon-combobox");
+const newSalonOptionsEl = document.getElementById("new-salon-options");
 const newProfessionalEl = document.getElementById("new-professional");
 const newServiceEl = document.getElementById("new-service");
 const newDateEl = document.getElementById("new-date");
@@ -333,6 +344,42 @@ TIME_SLOTS.forEach((time) => {
   option.textContent = time;
   newTimeEl.appendChild(option);
 });
+
+// admin_web/salonlar.html'de yönetilen şubeleri "Şube" arama kutusuna
+// (combobox) doldurur; admin_web/uzmanlar.js'teki aynı desen (bkz.
+// shared/combobox.js). Randevu, hangi uzman/hizmet seçilirse seçilsin,
+// burada açıkça seçilen şubeye kaydedilir.
+let allSalons = [];
+const salonCombobox = attachCombobox({
+  containerEl: newSalonComboboxEl,
+  searchEl: newSalonSearchEl,
+  hiddenEl: newSalonEl,
+  optionsEl: newSalonOptionsEl,
+  getItems: () => allSalons,
+  getLabel: (salon) => salon.name ?? "",
+  getId: (salon) => salon.id,
+});
+
+async function loadSalonNames() {
+  const snapshot = await getDocs(collection(db, "salons"));
+  allSalons = snapshot.docs
+    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+
+  // Takvim sekmesindeki şube filtresi: aynı isimli bir uzman farklı
+  // şubelerde çalışabildiği için, dolu/boş saat sorgusu artık bir şube
+  // seçilmesini gerektiriyor (bkz. loadCalendar).
+  const previous = calendarSalonEl.value;
+  calendarSalonEl.innerHTML = "";
+  allSalons.forEach((salon) => {
+    const option = document.createElement("option");
+    option.value = salon.id;
+    option.textContent = salon.name ?? "";
+    calendarSalonEl.appendChild(option);
+  });
+  if (allSalons.some((s) => s.id === previous)) calendarSalonEl.value = previous;
+  if (calendarLoaded) await loadCalendar();
+}
 
 // Uzman ve hizmet dropdown'ları admin_web/uzmanlar.html ve hizmetler.html
 // üzerinden yönetilen koleksiyonlardan geliyor; buradaki listeler sabit
@@ -368,6 +415,7 @@ async function loadServiceOptions() {
   });
 }
 
+loadSalonNames();
 loadProfessionalOptions();
 loadServiceOptions();
 
@@ -429,6 +477,7 @@ function resetNewBookingForm() {
   editingOriginalStatus = null;
   newBookingFormEl.reset();
   newUserOptionsEl.hidden = true;
+  salonCombobox.clear();
   newFormTitleEl.textContent = "Yeni Randevu";
   newSubmitBtnEl.textContent = "Randevu Oluştur";
   newCancelBtnEl.hidden = true;
@@ -440,6 +489,7 @@ function startEdit(booking) {
   const user = allUsers.find((u) => u.id === booking.userId);
   newUserEl.value = booking.userId ?? "";
   newUserSearchEl.value = user ? userLabel(user) : "";
+  salonCombobox.setValue(booking.salonId ?? "");
   newProfessionalEl.value = booking.professional ?? newProfessionalEl.value;
   newServiceEl.value = booking.service ?? newServiceEl.value;
   newDateEl.value = booking.dateIso;
@@ -472,12 +522,19 @@ newBookingFormEl.addEventListener("submit", async (e) => {
     newFormStatusEl.textContent = "Tarih ve saat seçmelisin.";
     return;
   }
+  const salonId = newSalonEl.value;
+  if (!salonId) {
+    newFormStatusEl.textContent = "Bir şube seçmelisin.";
+    return;
+  }
 
   newFormStatusEl.textContent = "Kaydediliyor...";
 
   const serviceOption = newServiceEl.selectedOptions[0];
+  const salon = allSalons.find((s) => s.id === salonId)?.name ?? "";
   const data = {
-    salon: "The Gallery Salon",
+    salonId,
+    salon,
     userId,
     professional: newProfessionalEl.value,
     service: serviceOption.value,

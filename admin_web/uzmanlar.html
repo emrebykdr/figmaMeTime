@@ -26,6 +26,7 @@
               <tr>
                 <th>Fotoğraf</th>
                 <th>İsim</th>
+                <th>Şube</th>
                 <th>Rol</th>
                 <th>Rating</th>
                 <th>Çalışma Günü</th>
@@ -48,6 +49,15 @@
             <label>
               İsim
               <input type="text" id="prof-name" required />
+            </label>
+
+            <label>
+              Şube
+              <div class="combobox" id="prof-salon-combobox">
+                <input type="text" id="prof-salon-search" placeholder="Şube ara..." autocomplete="off" />
+                <input type="hidden" id="prof-salon" />
+                <div class="combobox-options" id="prof-salon-options" hidden></div>
+              </div>
             </label>
 
             <label>
@@ -110,6 +120,6 @@
     </div>
   </div>
 
-  <script type="module" src="uzmanlar.js?v=3"></script>
+  <script type="module" src="uzmanlar.js?v=6"></script>
 </body>
 </html>

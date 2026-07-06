@@ -1,6 +1,7 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
 import { requireLogin } from "./shared/auth.js?v=2";
+import { attachCombobox } from "./shared/combobox.js?v=2";
 import {
   collection,
   doc,
@@ -28,6 +29,10 @@ const listBodyEl = document.getElementById("professionals-body");
 const formTitleEl = document.getElementById("form-title");
 const formEl = document.getElementById("professional-form");
 const nameEl = document.getElementById("prof-name");
+const salonEl = document.getElementById("prof-salon");
+const salonSearchEl = document.getElementById("prof-salon-search");
+const salonComboboxEl = document.getElementById("prof-salon-combobox");
+const salonOptionsEl = document.getElementById("prof-salon-options");
 const roleEl = document.getElementById("prof-role");
 const ratingEl = document.getElementById("prof-rating");
 const photoUrlEl = document.getElementById("prof-photo-url");
@@ -44,6 +49,29 @@ const formStatusEl = document.getElementById("form-status");
 let professionals = [];
 let editingId = null;
 let daysOff = [];
+let allSalons = [];
+let salonNameById = {};
+
+// admin_web/salonlar.html'de yönetilen şubeleri "Şube" arama kutusuna
+// (combobox) doldurur; admin_web/randevular.js'teki Kullanıcı combobox'ıyla
+// aynı davranış (bkz. shared/combobox.js).
+const salonCombobox = attachCombobox({
+  containerEl: salonComboboxEl,
+  searchEl: salonSearchEl,
+  hiddenEl: salonEl,
+  optionsEl: salonOptionsEl,
+  getItems: () => allSalons,
+  getLabel: (salon) => salon.name ?? "",
+  getId: (salon) => salon.id,
+});
+
+async function loadSalonOptions() {
+  const snapshot = await getDocs(collection(db, "salons"));
+  allSalons = snapshot.docs
+    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  salonNameById = Object.fromEntries(allSalons.map((s) => [s.id, s.name ?? ""]));
+}
 
 // --- Haftalık müsaitlik tablosu (6 saat x 7 gün checkbox grid'i) ---
 function buildAvailabilityGrid() {
@@ -136,6 +164,7 @@ function renderList() {
     row.innerHTML = `
       <td>${prof.photoUrl ? `<img class="table-thumb" src="${prof.photoUrl}" alt="" />` : ""}</td>
       <td>${prof.name ?? ""}</td>
+      <td>${salonNameById[prof.salonId] ?? ""}</td>
       <td>${prof.role ?? ""}</td>
       <td>${prof.rating ?? ""}</td>
       <td>${workingDayCount}/7</td>
@@ -158,6 +187,7 @@ function resetForm() {
   editingId = null;
   daysOff = [];
   formEl.reset();
+  salonCombobox.clear();
   ratingEl.value = "5.0";
   photoUrlEl.value = "";
   photoPreviewEl.src = "";
@@ -174,6 +204,7 @@ function startEdit(prof) {
   daysOff = [...(prof.daysOff ?? [])];
 
   nameEl.value = prof.name ?? "";
+  salonCombobox.setValue(prof.salonId ?? "");
   roleEl.value = prof.role ?? "";
   ratingEl.value = prof.rating ?? "5.0";
   photoUrlEl.value = prof.photoUrl ?? "";
@@ -213,6 +244,10 @@ formEl.addEventListener("submit", async (e) => {
     formStatusEl.textContent = "İsim, rol ve rating gerekli.";
     return;
   }
+  if (!salonEl.value) {
+    formStatusEl.textContent = "Bir şube seçmelisin.";
+    return;
+  }
 
   saveBtnEl.disabled = true;
   formStatusEl.textContent = "Kaydediliyor...";
@@ -223,6 +258,7 @@ formEl.addEventListener("submit", async (e) => {
     const data = {
       id: docRef.id,
       name,
+      salonId: salonEl.value,
       role,
       rating,
       photoUrl: photoUrlEl.value.trim(),
@@ -248,4 +284,4 @@ formEl.addEventListener("submit", async (e) => {
 });
 
 resetForm();
-loadProfessionals();
+loadSalonOptions().then(loadProfessionals);

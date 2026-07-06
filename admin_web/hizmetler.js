@@ -1,6 +1,7 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
 import { requireLogin } from "./shared/auth.js?v=2";
+import { attachCombobox } from "./shared/combobox.js?v=2";
 import {
   collection,
   doc,
@@ -21,6 +22,10 @@ const listBodyEl = document.getElementById("services-body");
 const formTitleEl = document.getElementById("form-title");
 const formEl = document.getElementById("service-form");
 const nameEl = document.getElementById("service-name");
+const salonEl = document.getElementById("service-salon");
+const salonSearchEl = document.getElementById("service-salon-search");
+const salonComboboxEl = document.getElementById("service-salon-combobox");
+const salonOptionsEl = document.getElementById("service-salon-options");
 const categoryEl = document.getElementById("service-category");
 const durationEl = document.getElementById("service-duration");
 const priceEl = document.getElementById("service-price");
@@ -33,10 +38,33 @@ const formStatusEl = document.getElementById("form-status");
 
 let services = [];
 let editingId = null;
+let allSalons = [];
+let salonNameById = {};
 
 photoUrlEl.addEventListener("input", () => {
   photoPreviewEl.src = photoUrlEl.value.trim();
 });
+
+// admin_web/salonlar.html'de yönetilen şubeleri "Şube" arama kutusuna
+// (combobox) doldurur; admin_web/randevular.js'teki Kullanıcı combobox'ıyla
+// aynı davranış (bkz. shared/combobox.js).
+const salonCombobox = attachCombobox({
+  containerEl: salonComboboxEl,
+  searchEl: salonSearchEl,
+  hiddenEl: salonEl,
+  optionsEl: salonOptionsEl,
+  getItems: () => allSalons,
+  getLabel: (salon) => salon.name ?? "",
+  getId: (salon) => salon.id,
+});
+
+async function loadSalonOptions() {
+  const snapshot = await getDocs(collection(db, "salons"));
+  allSalons = snapshot.docs
+    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  salonNameById = Object.fromEntries(allSalons.map((s) => [s.id, s.name ?? ""]));
+}
 
 async function loadServices() {
   listStatusEl.textContent = "Yükleniyor...";
@@ -60,6 +88,7 @@ function renderList() {
     row.innerHTML = `
       <td>${service.photoUrl ? `<img class="table-thumb" src="${service.photoUrl}" alt="" />` : ""}</td>
       <td>${service.name ?? ""}</td>
+      <td>${salonNameById[service.salonId] ?? ""}</td>
       <td>${service.category ?? ""}</td>
       <td>${service.duration ?? ""} dk</td>
       <td>${service.price ?? ""}</td>
@@ -79,6 +108,7 @@ function renderList() {
 function resetForm() {
   editingId = null;
   formEl.reset();
+  salonCombobox.clear();
   photoUrlEl.value = "";
   photoPreviewEl.src = "";
   formTitleEl.textContent = "Yeni Hizmet";
@@ -90,6 +120,7 @@ function resetForm() {
 function startEdit(service) {
   editingId = service.id;
   nameEl.value = service.name ?? "";
+  salonCombobox.setValue(service.salonId ?? "");
   categoryEl.value = service.category ?? "Nail";
   durationEl.value = service.duration ?? "";
   priceEl.value = service.price ?? "";
@@ -130,6 +161,10 @@ formEl.addEventListener("submit", async (e) => {
     formStatusEl.textContent = "İsim, süre ve fiyat gerekli.";
     return;
   }
+  if (!salonEl.value) {
+    formStatusEl.textContent = "Bir şube seçmelisin.";
+    return;
+  }
 
   saveBtnEl.disabled = true;
   formStatusEl.textContent = "Kaydediliyor...";
@@ -137,7 +172,15 @@ formEl.addEventListener("submit", async (e) => {
   const docRef = editingId ? doc(db, "services", editingId) : doc(collection(db, "services"));
 
   try {
-    const data = { id: docRef.id, name, category, duration, price, photoUrl: photoUrlEl.value.trim() };
+    const data = {
+      id: docRef.id,
+      name,
+      salonId: salonEl.value,
+      category,
+      duration,
+      price,
+      photoUrl: photoUrlEl.value.trim(),
+    };
 
     if (editingId) {
       await updateDoc(docRef, data);
@@ -157,4 +200,4 @@ formEl.addEventListener("submit", async (e) => {
 });
 
 resetForm();
-loadServices();
+loadSalonOptions().then(loadServices);

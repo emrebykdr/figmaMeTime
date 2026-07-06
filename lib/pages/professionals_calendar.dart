@@ -5,6 +5,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/page_sheet.dart';
 import 'package:figmaap/pages/successful_page.dart';
 import 'package:figmaap/services/booking_service.dart';
+import 'package:figmaap/services/salon_service.dart';
 
 
 class ProfessionalsCalendar extends StatefulWidget {
@@ -95,6 +96,7 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
     final dayName = _dayNames[_selectedDate.weekday % 7];
     final date = '$dayName, ${_selectedDate.day}';
     final times = await BookingService().getBookedTimes(
+      salonId: SalonService.currentSalonId ?? '',
       professional: widget.name,
       date: date,
     );
@@ -447,7 +449,8 @@ class _ProfessionalsCalendarState extends State<ProfessionalsCalendar> {
                   final dayName = _dayNames[_selectedDate.weekday % 7];
                   try {
                     await BookingService().addBooking(
-                      salon: 'The Gallery Salon',
+                      salonId: SalonService.currentSalonId ?? '',
+                      salon: SalonService.currentSalonName ?? '',
                       professional: widget.name,
                       service: widget.selectedService,
                       date: '$dayName, ${_selectedDate.day}',

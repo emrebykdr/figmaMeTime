@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salon Bilgileri - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <h1 class="page-title">Salon Bilgileri</h1>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Şubeler</h2>
+            <p id="list-status" class="status"></p>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>Adres</th>
+                <th>Telefon</th>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Randevu</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="salons-body">
+              <!-- salonlar.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Yeni Şube</h2>
+          </div>
+
+          <form id="salon-form" class="booking-form">
+            <label>
+              Salon Adı
+              <input type="text" id="salon-name" placeholder="The Gallery Salon" required />
+            </label>
+
+            <label>
+              Adres
+              <input type="text" id="salon-address" placeholder="8502 Preston Rd. Inglewood" />
+            </label>
+
+            <label>
+              Telefon
+              <input type="text" id="salon-phone" placeholder="+1 555 123 45 67" />
+            </label>
+
+            <label>
+              E-posta
+              <input type="email" id="salon-email" placeholder="info@gallerysalon.com" />
+            </label>
+
+            <label>
+              Fiyat Aralığı
+              <input type="text" id="salon-price-tier" placeholder="$$" />
+            </label>
+
+            <label>
+              Fotoğraf URL'si
+              <div class="field-row">
+                <img id="photo-preview" class="photo-preview" alt="" />
+                <input type="text" id="salon-photo-url" placeholder="https://..." />
+              </div>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" id="save-btn" class="approve-btn">Şube Ekle</button>
+            </div>
+            <p id="form-status" class="status"></p>
+          </form>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="salonlar.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Şube Detayı - MeTime Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-slot"></div>
+
+    <div class="main">
+      <div id="topbar-slot"></div>
+
+      <main class="content">
+        <a class="secondary-btn" href="salonlar.html">&larr; Şubelere dön</a>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Şube Bilgileri</h2>
+          </div>
+
+          <form id="salon-form" class="booking-form">
+            <label>
+              Salon Adı
+              <input type="text" id="edit-name" required />
+            </label>
+
+            <label>
+              Adres
+              <input type="text" id="edit-address" />
+            </label>
+
+            <label>
+              Telefon
+              <input type="text" id="edit-phone" />
+            </label>
+
+            <label>
+              E-posta
+              <input type="email" id="edit-email" />
+            </label>
+
+            <label>
+              Fiyat Aralığı
+              <input type="text" id="edit-price-tier" />
+            </label>
+
+            <label>
+              Fotoğraf URL'si
+              <div class="field-row">
+                <img id="photo-preview" class="photo-preview" alt="" />
+                <input type="text" id="edit-photo-url" />
+              </div>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="approve-btn">Kaydet</button>
+              <button type="button" id="delete-btn" class="reject-btn">Şubeyi Sil</button>
+            </div>
+            <p id="salon-form-status" class="status"></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Uzmanlar</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>Rol</th>
+                <th>Rating</th>
+              </tr>
+            </thead>
+            <tbody id="professionals-body">
+              <!-- salon-detay.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Hizmetler</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>Kategori</th>
+                <th>Süre</th>
+                <th>Fiyat</th>
+              </tr>
+            </thead>
+            <tbody id="services-body">
+              <!-- salon-detay.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Gelecek Randevular</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="upcoming-body">
+              <!-- salon-detay.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>Geçmiş Randevular</h2>
+          </div>
+          <table class="bookings-table">
+            <thead>
+              <tr>
+                <th>Uzman</th>
+                <th>Hizmet</th>
+                <th>Tarih</th>
+                <th>Saat</th>
+                <th>Fiyat</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="past-body">
+              <!-- salon-detay.js tarafından doldurulur -->
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="salon-detay.js?v=2"></script>
+</body>
+</html>

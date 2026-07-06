@@ -8,6 +8,8 @@ import 'package:figmaap/widgets/error_retry.dart';
 import 'package:figmaap/pages/successful_page.dart';
 import 'package:figmaap/services/booking_service.dart';
 import 'package:figmaap/services/professional_service.dart';
+import 'package:figmaap/services/salon_service.dart';
+import 'package:figmaap/pages/account_settings_page.dart';
 
 class NoPreference extends StatefulWidget {
   final String selectedService;
@@ -59,6 +61,7 @@ class _NoPreferenceState extends State<NoPreference> {
   List<Map<String, dynamic>> _professionals = [];
   bool _loadingProfessionals = true;
   String? _error;
+  bool _noSalonSelected = false;
   // Seçili gün için, tüm uzmanların çalışma saatlerinden üretilen liste:
   // [{'time': '10:00 am', 'with': 'Anna Smith'}, ...]. Sabit liste değil.
   List<Map<String, String>> _availableSlots = [];
@@ -86,9 +89,20 @@ class _NoPreferenceState extends State<NoPreference> {
     setState(() {
       _loadingProfessionals = true;
       _error = null;
+      _noSalonSelected = false;
     });
+    final salonId = SalonService.currentSalonId;
+    if (salonId == null) {
+      setState(() {
+        _noSalonSelected = true;
+        _loadingProfessionals = false;
+      });
+      return;
+    }
     try {
-      final professionals = await ProfessionalService().getProfessionals();
+      final professionals = await ProfessionalService().getProfessionals(
+        salonId: salonId,
+      );
       if (!mounted) return;
       setState(() {
         _professionals = professionals;
@@ -134,6 +148,7 @@ class _NoPreferenceState extends State<NoPreference> {
       final result = <String, Set<String>>{};
       for (final professional in professionalNames) {
         result[professional] = await BookingService().getBookedTimes(
+          salonId: SalonService.currentSalonId ?? '',
           professional: professional,
           date: date,
         );
@@ -394,9 +409,54 @@ class _NoPreferenceState extends State<NoPreference> {
     );
   }
 
+  Widget _buildNoSalonView(Responsive r) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: r.w(40)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Please choose a branch in Account Settings first.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontWeight: FontWeight.w500,
+                fontSize: r.sp(14),
+                color: AppColors.tertiary,
+              ),
+            ),
+            SizedBox(height: r.h(16)),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+                );
+              },
+              child: Text(
+                'Go to Account Settings',
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  fontWeight: FontWeight.w600,
+                  fontSize: r.sp(14),
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTimeGrid(Responsive r) {
     if (_loadingProfessionals) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_noSalonSelected) {
+      return _buildNoSalonView(r);
     }
 
     if (_error != null) {
@@ -487,7 +547,8 @@ class _NoPreferenceState extends State<NoPreference> {
                   );
                   try {
                     await BookingService().addBooking(
-                      salon: 'The Gallery Salon',
+                      salonId: SalonService.currentSalonId ?? '',
+                      salon: SalonService.currentSalonName ?? '',
                       professional: slot['with']!,
                       service: widget.selectedService,
                       date: '$dayName, ${_selectedDate.day}',

@@ -1,7 +1,7 @@
 import { db } from "./shared/firebase.js?v=2";
-import { mountSidebar, mountTopbar } from "./shared/layout.js?v=2";
+import { mountSidebar, mountTopbar } from "./shared/layout.js?v=4";
 import { requireLogin } from "./shared/auth.js?v=2";
-import { generateMasterCode, formatRemaining } from "./shared/loginCode.js?v=3";
+import { generateMasterCode, getMasterCode, formatRemaining } from "./shared/loginCode.js?v=4";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const loggedIn = requireLogin();
@@ -178,24 +178,32 @@ async function loadDashboard() {
 // --- Master Giriş Kodu: kullanıcı seçmeden, herhangi bir hesap için geçerli
 // TEK bir kod üretir (bkz. shared/loginCode.js -> generateMasterCode ve
 // UserService.watchMasterCode). Belirli bir kullanıcıya bağlı olmadığı için
-// email gönderilmez, kod sadece burada gösterilir.
-const loginCodeGenerateBtnEl = document.getElementById("login-code-generate-btn");
-const loginCodeResultRowEl = document.getElementById("login-code-result-row");
+// email gönderilmez, kod sadece burada gösterilir. Manuel "Kod Oluştur"
+// butonu yok: Dashboard açıldığında geçerli bir kod varsa o gösterilir,
+// yoksa/süresi dolduğunda otomatik olarak yenisi üretilip gösterilmeye devam edilir.
 const loginCodeResultEl = document.getElementById("login-code-result");
 const loginCodeTimerEl = document.getElementById("login-code-timer");
 const loginCodeStatusEl = document.getElementById("login-code-status");
 
 let loginCodeTimerInterval = null;
+let loginCodeRefreshTimeout = null;
+
+function showMasterCode(result) {
+  loginCodeResultEl.value = result.code;
+  loginCodeStatusEl.textContent = "Herhangi bir hesabın giriş kodu ekranında kullanılabilir.";
+  startLoginCodeTimer(result.expiresAt);
+}
 
 function startLoginCodeTimer(expiresAt) {
   if (loginCodeTimerInterval) clearInterval(loginCodeTimerInterval);
+  if (loginCodeRefreshTimeout) clearTimeout(loginCodeRefreshTimeout);
 
   const tick = () => {
     const remaining = expiresAt - Date.now();
     if (remaining <= 0) {
       clearInterval(loginCodeTimerInterval);
       loginCodeTimerInterval = null;
-      loginCodeTimerEl.textContent = "Süresi doldu";
+      loginCodeTimerEl.textContent = "Yenileniyor...";
       return;
     }
     loginCodeTimerEl.textContent = `Geçerlilik: ${formatRemaining(remaining)}`;
@@ -203,21 +211,27 @@ function startLoginCodeTimer(expiresAt) {
 
   tick();
   loginCodeTimerInterval = setInterval(tick, 1000);
+
+  // Süre dolduğunda kullanıcı hiçbir şey yapmadan otomatik yeni kod üretilir.
+  loginCodeRefreshTimeout = setTimeout(refreshMasterCode, Math.max(0, expiresAt - Date.now()));
 }
 
-loginCodeGenerateBtnEl.addEventListener("click", async () => {
-  loginCodeGenerateBtnEl.disabled = true;
-  loginCodeStatusEl.textContent = "Kod oluşturuluyor...";
-
+async function refreshMasterCode() {
   const result = await generateMasterCode(db);
-  loginCodeResultRowEl.hidden = false;
-  loginCodeResultEl.value = result.code;
-  startLoginCodeTimer(result.expiresAt);
-  loginCodeStatusEl.textContent = `Master kod oluşturuldu: ${result.code}. Herhangi bir hesabın giriş kodu ekranında kullanılabilir.`;
+  showMasterCode(result);
+}
 
-  loginCodeGenerateBtnEl.disabled = false;
-});
+async function initMasterCode() {
+  loginCodeStatusEl.textContent = "Yükleniyor...";
+  const existing = await getMasterCode(db);
+  if (existing && existing.expiresAt > Date.now()) {
+    showMasterCode(existing);
+  } else {
+    await refreshMasterCode();
+  }
+}
 
 if (loggedIn) {
   loadDashboard();
+  initMasterCode();
 }

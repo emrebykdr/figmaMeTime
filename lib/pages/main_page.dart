@@ -14,6 +14,7 @@ import 'package:figmaap/pages/account_settings_page.dart';
 import 'package:figmaap/pages/notifications_page.dart';
 import 'package:figmaap/services/user_service.dart';
 import 'package:figmaap/services/notification_service.dart';
+import 'package:figmaap/services/salon_service.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -59,11 +60,24 @@ class _MainPageState extends State<MainPage> {
   StreamSubscription<Map<String, dynamic>?>? _profileSub;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // Reklam banner'ı artık sabit pazarlama görselleri yerine admin panelinden
+  // (admin_web/salonlar.html) girilen gerçek şubeleri fotoğraflarıyla gösterir.
+  List<Map<String, dynamic>> _salons = [];
+
   @override
   void initState() {
     super.initState();
     _listenForProfileChanges();
     NotificationService().checkTodayReminders();
+    _loadSalons();
+  }
+
+  Future<void> _loadSalons() async {
+    final salons = await SalonService().getSalons();
+    if (!mounted) return;
+    setState(() {
+      _salons = salons;
+    });
   }
 
   // Kullanıcının kendi dokümanını canlı dinler: hem Hesap Ayarları'ndan
@@ -427,59 +441,105 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildAdsBanner(Responsive r) {
+    if (_salons.isEmpty) return const SizedBox.shrink();
+
     return SizedBox(
       height: r.h(140),
-      child: ListView(
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: r.w(30)),
-        children: [
-          _buildAdCard(r, 'Find the best\nhair stylist\nfor you.', 'assets/images/ads1.jpg'),
-          SizedBox(width: r.w(12)),
-          _buildAdCard(r, 'Relax with\nour massage\nspecials.', 'assets/images/ads2.png'),
-          SizedBox(width: r.w(12)),
-          _buildAdCard(r, 'Perfect nails\nfor every\noccasion.', 'assets/images/ads3.jpg'),
-        ],
+        itemCount: _salons.length,
+        itemBuilder: (context, index) {
+          final isLast = index == _salons.length - 1;
+          return Padding(
+            padding: EdgeInsets.only(right: isLast ? 0 : r.w(12)),
+            child: _buildAdCard(r, _salons[index]),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildAdCard(Responsive r, String text, String imagePath) {
+  Widget _buildAdCard(Responsive r, Map<String, dynamic> salon) {
+    final photoUrl = salon['photoUrl'] as String? ?? '';
+    final name = salon['name'] as String? ?? '';
+    final address = salon['address'] as String? ?? '';
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const SalonPage()),
+          MaterialPageRoute(
+            builder: (_) => SalonPage(salonId: salon['id'] as String),
+          ),
         );
       },
-      child: Container(
-      width: r.w(280),
-      height: r.h(140),
-      decoration: BoxDecoration(
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(r.r(10)),
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-            Colors.black.withValues(alpha: 0.4),
-            BlendMode.darken,
+        child: SizedBox(
+          width: r.w(280),
+          height: r.h(140),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // admin_web/salonlar.html'den girilen fotoğraf URL'si (varsa)
+              // ağ üzerinden yükleniyor; boşsa/yüklenemezse düz bir arka
+              // plan rengi gösterilir (bkz. widgets/app_card.dart deseni).
+              photoUrl.isEmpty
+                  ? Container(color: AppColors.cardBackground)
+                  : Image.network(
+                      photoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: AppColors.cardBackground),
+                    ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.55),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(r.w(16)),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontFamily: 'Raleway',
+                          fontWeight: FontWeight.w700,
+                          fontSize: r.sp(20),
+                          height: 1.3,
+                          color: AppColors.white,
+                        ),
+                      ),
+                      if (address.isNotEmpty)
+                        Text(
+                          address,
+                          style: TextStyle(
+                            fontFamily: 'Raleway',
+                            fontWeight: FontWeight.w500,
+                            fontSize: r.sp(13),
+                            color: AppColors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      padding: EdgeInsets.all(r.w(16)),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Raleway',
-            fontWeight: FontWeight.w700,
-            fontSize: r.sp(20),
-            height: 1.3,
-            color: AppColors.white,
-          ),
-        ),
-      ),
-    ),
     );
   }
 

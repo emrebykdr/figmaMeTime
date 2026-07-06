@@ -7,6 +7,7 @@ import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/pages/home_page.dart';
 import 'package:figmaap/pages/main_page.dart';
 import 'package:figmaap/services/user_service.dart';
+import 'package:figmaap/services/salon_service.dart';
 
 // Uygulamanın giriş noktası. Flutter her platformda (mobil/web) burayı çalıştırır.
 void main() async {
@@ -20,6 +21,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Kullanıcının en son seçtiği şube (varsa) statik alanlara yüklenir.
+  await SalonService.loadSession();
 
   // Cihazda daha önce kaydedilmiş bir oturum var mı diye bakar (SharedPreferences üzerinden).
   var loggedIn = await UserService.isLoggedIn();

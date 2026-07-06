@@ -381,6 +381,98 @@ class DayPickerSheet {
   }
 }
 
+// ─── Salon Picker Sheet ───
+
+class SalonPickerSheet {
+  static Future<Map<String, dynamic>?> show(
+    BuildContext context,
+    List<Map<String, dynamic>> salons,
+    String? currentSalonId,
+  ) {
+    return showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        final r = Responsive(context);
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: r.h(24), horizontal: r.w(16)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select a branch',
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  fontWeight: FontWeight.w600,
+                  fontSize: r.sp(18),
+                  color: AppColors.almostBlack,
+                ),
+              ),
+              SizedBox(height: r.h(16)),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: r.h(320)),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: salons.length,
+                  itemBuilder: (context, index) {
+                    final salon = salons[index];
+                    final isSelected = salon['id'] == currentSalonId;
+                    final address = salon['address'] as String? ?? '';
+                    return GestureDetector(
+                      onTap: () => Navigator.pop(context, salon),
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: r.h(10)),
+                        padding: EdgeInsets.all(r.w(14)),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(r.r(10)),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : const Color(0xFFCDCDCD),
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              salon['name'] as String? ?? '',
+                              style: TextStyle(
+                                fontFamily: 'Raleway',
+                                fontWeight: FontWeight.w700,
+                                fontSize: r.sp(15),
+                                color: isSelected ? AppColors.primary : AppColors.almostBlack,
+                              ),
+                            ),
+                            if (address.isNotEmpty) ...[
+                              SizedBox(height: r.h(2)),
+                              Text(
+                                address,
+                                style: TextStyle(
+                                  fontFamily: 'Raleway',
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: r.sp(12),
+                                  color: AppColors.tertiary,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 // ─── Time Picker Sheet ───
 
 class TimePickerSheet {

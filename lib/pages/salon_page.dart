@@ -3,13 +3,66 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:figmaap/core(gerekli)/color.dart';
 import 'package:figmaap/core(gerekli)/responsive.dart';
 import 'package:figmaap/widgets/app_header.dart';
+import 'package:figmaap/widgets/error_retry.dart';
+import 'package:figmaap/services/salon_service.dart';
 
-class SalonPage extends StatelessWidget {
-  const SalonPage({super.key});
+class SalonPage extends StatefulWidget {
+  final String salonId;
+
+  const SalonPage({super.key, required this.salonId});
+
+  @override
+  State<SalonPage> createState() => _SalonPageState();
+}
+
+class _SalonPageState extends State<SalonPage> {
+  Map<String, dynamic>? _salon;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSalon();
+  }
+
+  Future<void> _loadSalon() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final salon = await SalonService().getSalonById(widget.salonId);
+      if (!mounted) return;
+      setState(() {
+        _salon = salon;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Could not load salon.';
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final r = Responsive(context);
+
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: ErrorRetryView(message: _error!, onRetry: _loadSalon),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -38,16 +91,26 @@ class SalonPage extends StatelessWidget {
   }
 
   Widget _buildHeroImage(BuildContext context, Responsive r) {
+    final photoUrl = _salon?['photoUrl'] as String? ?? '';
+    final name = _salon?['name'] as String? ?? 'The Gallery Salon';
+    final address = _salon?['address'] as String? ?? '';
+    final priceTier = _salon?['priceTier'] as String? ?? '';
+    final subtitle = [address, priceTier].where((s) => s.isNotEmpty).join('  •  ');
+
     return SizedBox(
       width: double.infinity,
       height: r.h(380),
       child: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/salon.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: photoUrl.isEmpty
+                ? Image.asset('assets/images/salon.jpg', fit: BoxFit.cover)
+                : Image.network(
+                    photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Image.asset('assets/images/salon.jpg', fit: BoxFit.cover),
+                  ),
           ),
           Positioned.fill(
             child: Container(
@@ -88,7 +151,7 @@ class SalonPage extends StatelessWidget {
             bottom: r.h(50),
             left: r.w(30),
             child: Text(
-              'The Gallery Salon',
+              name,
               style: TextStyle(
                 fontFamily: 'Raleway',
                 fontWeight: FontWeight.w700,
@@ -97,19 +160,20 @@ class SalonPage extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            bottom: r.h(24),
-            left: r.w(30),
-            child: Text(
-              '8502 Preston Rd. Inglewood  •  \$\$',
-              style: TextStyle(
-                fontFamily: 'Raleway',
-                fontWeight: FontWeight.w500,
-                fontSize: r.sp(14),
-                color: AppColors.white.withValues(alpha: 0.8),
+          if (subtitle.isNotEmpty)
+            Positioned(
+              bottom: r.h(24),
+              left: r.w(30),
+              child: Text(
+                subtitle,
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  fontWeight: FontWeight.w500,
+                  fontSize: r.sp(14),
+                  color: AppColors.white.withValues(alpha: 0.8),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

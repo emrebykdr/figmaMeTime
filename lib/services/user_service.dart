@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:figmaap/services/salon_service.dart';
 
 class UserService {
   final _firestore = FirebaseFirestore.instance;
@@ -275,5 +276,12 @@ class UserService {
     currentUserId = null;
     currentPhone = null;
     currentUserName = null;
+    // prefs.clear() salon_id/salon_name'i de siliyor ama SalonService'in
+    // bellekteki static alanlarına dokunmuyor; bu yüzden burada da elle
+    // temizlenmezse çıkış yapılmış olsa bile eski şube seçili kalır ve
+    // misafir akışındaki şube seçim ekranı (branch_picker_page.dart)
+    // "zaten seçili" sanıp atlanır.
+    SalonService.currentSalonId = null;
+    SalonService.currentSalonName = null;
   }
 }
