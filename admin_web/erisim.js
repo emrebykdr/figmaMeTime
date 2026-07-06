@@ -76,6 +76,7 @@ function renderList() {
       <td><input type="text" class="prof-password" value="${prof.password ?? ""}" /></td>
       <td class="row-actions">
         <button class="secondary-btn save-btn">Kaydet</button>
+        <button class="reject-btn remove-access-btn">Erişimi Kaldır</button>
       </td>
     `;
 
@@ -83,6 +84,9 @@ function renderList() {
     const passwordInput = row.querySelector(".prof-password");
     row.querySelector(".save-btn").addEventListener("click", () =>
       saveProfessionalCredentials(prof, emailInput.value.trim(), passwordInput.value)
+    );
+    row.querySelector(".remove-access-btn").addEventListener("click", () =>
+      removeProfessionalAccess(prof, emailInput, passwordInput)
     );
 
     listBodyEl.appendChild(row);
@@ -110,6 +114,26 @@ async function saveProfessionalCredentials(prof, email, password) {
   prof.email = email;
   prof.password = password;
   listStatusEl.textContent = "Kaydedildi.";
+}
+
+// Uzmanın panele giriş yapabilmesini durdurur (ör. işten ayrıldığında):
+// email/password alanları boşaltılır, böylece login.js'teki uzman girişi
+// sorgusu artık bu kişiyi bulamaz. saveProfessionalCredentials'ın aksine,
+// burada boş değerler bilerek kaydediliyor (o fonksiyon boş bırakmaya izin
+// vermiyordu).
+async function removeProfessionalAccess(prof, emailInput, passwordInput) {
+  if (!prof.email && !prof.password) return;
+
+  const ok = window.confirm(`${prof.name ?? "Bu uzmanın"} panel erişimini kaldırmak istediğine emin misin?`);
+  if (!ok) return;
+
+  listStatusEl.textContent = "Kaldırılıyor...";
+  await updateDoc(doc(db, "professionals", prof.id), { email: "", password: "" });
+  prof.email = "";
+  prof.password = "";
+  emailInput.value = "";
+  passwordInput.value = "";
+  listStatusEl.textContent = "Erişim kaldırıldı.";
 }
 
 loadAdminCredentials();

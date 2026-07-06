@@ -186,15 +186,17 @@ function renderLeaveRequests(requests) {
   });
 }
 
+let myLeaveRequests = [];
+
 async function loadLeaveRequests() {
   if (!professional) return;
   const snapshot = await getDocs(
     query(collection(db, "leaveRequests"), where("professionalId", "==", professional.id))
   );
-  const requests = snapshot.docs
+  myLeaveRequests = snapshot.docs
     .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
     .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
-  renderLeaveRequests(requests);
+  renderLeaveRequests(myLeaveRequests);
 }
 
 leaveFormEl.addEventListener("submit", async (e) => {
@@ -204,6 +206,16 @@ leaveFormEl.addEventListener("submit", async (e) => {
   const date = leaveDateEl.value;
   if (!date) {
     leaveFormStatusEl.textContent = "Bir tarih seçmelisin.";
+    return;
+  }
+
+  // Aynı tarih için zaten bekleyen veya onaylanmış bir talep varsa tekrar
+  // gönderilmesin (reddedilmiş bir talep varsa yeniden denemeye izin verilir).
+  const hasActiveRequest = myLeaveRequests.some(
+    (r) => r.date === date && (r.status === "pending" || r.status === "approved")
+  );
+  if (hasActiveRequest) {
+    leaveFormStatusEl.textContent = "Bu tarih için zaten bekleyen veya onaylanmış bir izin talebin var.";
     return;
   }
 
