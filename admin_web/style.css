@@ -199,6 +199,12 @@ body {
   grid-template-columns: repeat(2, 1fr);
 }
 
+/* Şube sayısı sabit değil (3'ün katı olmak zorunda değil), bu yüzden
+   Dashboard'daki şube kartları sabit 3 sütun yerine otomatik sarılıyor. */
+#salon-stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 .section-title {
   font-size: 15px;
   font-weight: 700;

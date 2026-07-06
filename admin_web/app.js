@@ -137,15 +137,61 @@ function renderTopList(elementId, entries, emptyText) {
   });
 }
 
+// Her şube kartında kaç uzman/hizmet/randevu olduğunu saymak için (bkz.
+// admin_web/salonlar.js'teki aynı yardımcı).
+function countBySalonId(docs) {
+  const counts = {};
+  docs.forEach((data) => {
+    if (!data.salonId) return;
+    counts[data.salonId] = (counts[data.salonId] ?? 0) + 1;
+  });
+  return counts;
+}
+
+function renderSalonStats(salons, professionals, services, bookings) {
+  const gridEl = document.getElementById("salon-stats-grid");
+  gridEl.innerHTML = "";
+
+  if (salons.length === 0) {
+    gridEl.innerHTML = `<p class="status">Henüz şube eklenmedi.</p>`;
+    return;
+  }
+
+  const professionalCounts = countBySalonId(professionals);
+  const serviceCounts = countBySalonId(services);
+  const bookingCounts = countBySalonId(bookings);
+  const pendingCounts = countBySalonId(bookings.filter((b) => b.status === "waiting"));
+
+  salons
+    .slice()
+    .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+    .forEach((salon) => {
+      const card = document.createElement("div");
+      card.className = "stat-card";
+      card.innerHTML = `
+        <span class="stat-label">${salon.name ?? ""}</span>
+        <span class="stat-value">${bookingCounts[salon.id] ?? 0}</span>
+        <span class="stat-sub">Uzman: <strong>${professionalCounts[salon.id] ?? 0}</strong></span>
+        <span class="stat-sub">Hizmet: <strong>${serviceCounts[salon.id] ?? 0}</strong></span>
+        <span class="stat-sub">Onay bekleyen: <strong>${pendingCounts[salon.id] ?? 0}</strong></span>
+      `;
+      gridEl.appendChild(card);
+    });
+}
+
 async function loadDashboard() {
-  const [bookingsSnap, professionalsSnap, usersSnap] = await Promise.all([
+  const [bookingsSnap, professionalsSnap, usersSnap, salonsSnap, servicesSnap] = await Promise.all([
     getDocs(collection(db, "bookings")),
     getDocs(collection(db, "professionals")),
     getDocs(collection(db, "users")),
+    getDocs(collection(db, "salons")),
+    getDocs(collection(db, "services")),
   ]);
 
   const bookings = bookingsSnap.docs.map((d) => d.data());
   const professionals = professionalsSnap.docs.map((d) => d.data());
+  const services = servicesSnap.docs.map((d) => d.data());
+  const salons = salonsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   // --- Bekleyen onay uyarısı (badge) ---
   const pendingCount = bookings.filter((b) => b.status === "waiting").length;
@@ -173,6 +219,9 @@ async function loadDashboard() {
   document.getElementById("stat-users").textContent = usersSnap.size;
   document.getElementById("stat-total-bookings").textContent = bookings.length;
   document.getElementById("stat-professionals").textContent = professionals.length;
+
+  // --- Şube bazlı kartlar ---
+  renderSalonStats(salons, professionals, services, bookings);
 }
 
 // --- Master Giriş Kodu: kullanıcı seçmeden, herhangi bir hesap için geçerli
