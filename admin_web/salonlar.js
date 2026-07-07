@@ -1,6 +1,7 @@
 import { db } from "./shared/firebase.js?v=2";
 import { mountSidebar, mountTopbar } from "./shared/layout.js?v=5";
 import { requireLogin } from "./shared/auth.js?v=4";
+import { PAGE_SIZE, renderPagination } from "./shared/pagination.js?v=2";
 import {
   collection,
   doc,
@@ -16,6 +17,11 @@ mountTopbar("topbar-slot");
 
 const listStatusEl = document.getElementById("list-status");
 const listBodyEl = document.getElementById("salons-body");
+const paginationEl = document.getElementById("salons-pagination");
+let page = 1;
+let professionalCounts = {};
+let serviceCounts = {};
+let bookingCounts = {};
 
 const formStatusEl = document.getElementById("form-status");
 const formEl = document.getElementById("salon-form");
@@ -62,23 +68,26 @@ async function loadSalons() {
     .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
     .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
 
-  const professionalCounts = countBySalonId(professionalsSnap.docs.map((d) => d.data()));
-  const serviceCounts = countBySalonId(servicesSnap.docs.map((d) => d.data()));
-  const bookingCounts = countBySalonId(bookingsSnap.docs.map((d) => d.data()));
+  professionalCounts = countBySalonId(professionalsSnap.docs.map((d) => d.data()));
+  serviceCounts = countBySalonId(servicesSnap.docs.map((d) => d.data()));
+  bookingCounts = countBySalonId(bookingsSnap.docs.map((d) => d.data()));
 
-  renderList(allSalons, professionalCounts, serviceCounts, bookingCounts);
+  page = 1;
+  renderPage();
 }
 
-function renderList(salons, professionalCounts, serviceCounts, bookingCounts) {
+function renderPage() {
   listBodyEl.innerHTML = "";
 
-  if (salons.length === 0) {
+  if (allSalons.length === 0) {
     listStatusEl.textContent = "Henüz şube eklenmedi.";
+    paginationEl.innerHTML = "";
     return;
   }
-  listStatusEl.textContent = `${salons.length} şube.`;
+  listStatusEl.textContent = `${allSalons.length} şube.`;
 
-  salons.forEach((salon) => {
+  const start = (page - 1) * PAGE_SIZE;
+  allSalons.slice(start, start + PAGE_SIZE).forEach((salon) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${salon.name ?? ""}</td>
@@ -90,6 +99,11 @@ function renderList(salons, professionalCounts, serviceCounts, bookingCounts) {
       <td><a class="secondary-btn" href="salon-detay.html?id=${salon.id}">Detay</a></td>
     `;
     listBodyEl.appendChild(row);
+  });
+
+  renderPagination(paginationEl, page, allSalons.length, PAGE_SIZE, (newPage) => {
+    page = newPage;
+    renderPage();
   });
 }
 

@@ -1,6 +1,7 @@
 import { db } from "./shared/firebase.js?v=2";
 import { mountSidebar, mountTopbar } from "./shared/layout.js?v=5";
 import { requireLogin } from "./shared/auth.js?v=4";
+import { PAGE_SIZE, renderPagination } from "./shared/pagination.js?v=2";
 import {
   doc,
   getDoc,
@@ -48,7 +49,9 @@ adminFormEl.addEventListener("submit", async (e) => {
 // --- Uzman Girişleri ---
 const listStatusEl = document.getElementById("list-status");
 const listBodyEl = document.getElementById("professionals-body");
+const paginationEl = document.getElementById("professionals-pagination");
 let professionals = [];
+let page = 1;
 
 async function loadProfessionals() {
   listStatusEl.textContent = "Yükleniyor...";
@@ -56,6 +59,7 @@ async function loadProfessionals() {
   professionals = snapshot.docs
     .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
     .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  page = 1;
   renderList();
 }
 
@@ -64,11 +68,13 @@ function renderList() {
 
   if (professionals.length === 0) {
     listStatusEl.textContent = "Henüz uzman eklenmedi.";
+    paginationEl.innerHTML = "";
     return;
   }
   listStatusEl.textContent = `${professionals.length} uzman.`;
 
-  professionals.forEach((prof) => {
+  const start = (page - 1) * PAGE_SIZE;
+  professionals.slice(start, start + PAGE_SIZE).forEach((prof) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${prof.name ?? ""}</td>
@@ -90,6 +96,11 @@ function renderList() {
     );
 
     listBodyEl.appendChild(row);
+  });
+
+  renderPagination(paginationEl, page, professionals.length, PAGE_SIZE, (newPage) => {
+    page = newPage;
+    renderList();
   });
 }
 
