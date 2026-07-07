@@ -18,7 +18,6 @@ class SignUp extends StatefulWidget {
 class _SignUpState extends State<SignUp> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
 
   final List<Map<String, String>> _countries = [
@@ -39,7 +38,6 @@ class _SignUpState extends State<SignUp> {
     _selectedCode = _countries[0]['code']!;
     _nameController.addListener(_validateForm);
     _emailController.addListener(_validateForm);
-    _passwordController.addListener(_validateForm);
     _phoneController.addListener(_validateForm);
   }
 
@@ -48,7 +46,6 @@ class _SignUpState extends State<SignUp> {
     setState(() {
       _isFormValid = _nameController.text.trim().isNotEmpty &&
           _emailController.text.trim().isNotEmpty &&
-          _passwordController.text.isNotEmpty &&
           phoneDigits.length >= 7;
     });
   }
@@ -57,11 +54,9 @@ class _SignUpState extends State<SignUp> {
   void dispose() {
     _nameController.removeListener(_validateForm);
     _emailController.removeListener(_validateForm);
-    _passwordController.removeListener(_validateForm);
     _phoneController.removeListener(_validateForm);
     _nameController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -95,8 +90,6 @@ class _SignUpState extends State<SignUp> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
               ),
-              SizedBox(height: r.h(16)),
-              PasswordTextField(controller: _passwordController),
               SizedBox(height: r.h(16)),
               SignUpPhoneField(
                 controller: _phoneController,

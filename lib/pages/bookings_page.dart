@@ -65,9 +65,21 @@ class _BookingsPageState extends State<BookingsPage> {
   }
 
   Widget _buildBookingList(Responsive r) {
-    final stream = _selectedTab == 0
-        ? _bookingService.getPastBookings()
-        : _bookingService.getUpcomingBookings();
+    final Stream<QuerySnapshot> stream;
+    final String emptyText;
+    switch (_selectedTab) {
+      case 0:
+        stream = _bookingService.getPastBookings();
+        emptyText = 'No past bookings';
+        break;
+      case 1:
+        stream = _bookingService.getUpcomingBookings();
+        emptyText = 'No upcoming bookings';
+        break;
+      default:
+        stream = _bookingService.getWaitingBookings();
+        emptyText = 'No pending bookings';
+    }
 
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
@@ -79,7 +91,7 @@ class _BookingsPageState extends State<BookingsPage> {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
             child: Text(
-              _selectedTab == 0 ? 'No past bookings' : 'No upcoming bookings',
+              emptyText,
               style: TextStyle(
                 fontFamily: 'Raleway',
                 fontWeight: FontWeight.w500,
@@ -97,7 +109,9 @@ class _BookingsPageState extends State<BookingsPage> {
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             final bookingId = docs[index].id;
-            return _buildBookingCard(r, data, bookingId, _selectedTab == 1);
+            // Past randevularda iptal seçeneği gösterilmez, sadece
+            // Upcoming (onaylı) ve Waiting (onay bekleyen) için gösterilir.
+            return _buildBookingCard(r, data, bookingId, _selectedTab != 0);
           },
         );
       },
@@ -128,6 +142,7 @@ class _BookingsPageState extends State<BookingsPage> {
   }
 
   Widget _buildTabs(Responsive r) {
+    final tabWidth = r.w(314) / 3;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: r.w(30)),
       child: SizedBox(
@@ -137,8 +152,9 @@ class _BookingsPageState extends State<BookingsPage> {
           children: [
             Row(
               children: [
-                _buildTab(r, 'Past', 0),
-                _buildTab(r, 'Upcoming', 1),
+                _buildTab(r, 'Past', 0, tabWidth),
+                _buildTab(r, 'Upcoming', 1, tabWidth),
+                _buildTab(r, 'Waiting', 2, tabWidth),
               ],
             ),
             const Spacer(),
@@ -152,14 +168,19 @@ class _BookingsPageState extends State<BookingsPage> {
                 Row(
                   children: [
                     Container(
-                      width: r.w(157),
+                      width: tabWidth,
                       height: 2,
                       color: _selectedTab == 0 ? AppColors.primary : Colors.transparent,
                     ),
                     Container(
-                      width: r.w(157),
+                      width: tabWidth,
                       height: 2,
                       color: _selectedTab == 1 ? AppColors.primary : Colors.transparent,
+                    ),
+                    Container(
+                      width: tabWidth,
+                      height: 2,
+                      color: _selectedTab == 2 ? AppColors.primary : Colors.transparent,
                     ),
                   ],
                 ),
@@ -171,12 +192,12 @@ class _BookingsPageState extends State<BookingsPage> {
     );
   }
 
-  Widget _buildTab(Responsive r, String label, int index) {
+  Widget _buildTab(Responsive r, String label, int index, double width) {
     final isActive = _selectedTab == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = index),
       child: SizedBox(
-        width: r.w(157),
+        width: width,
         height: r.h(24),
         child: Center(
           child: Text(

@@ -86,53 +86,6 @@ class AppTextField extends StatelessWidget {
   }
 }
 
-// ─── Password TextField (göz ikonu ile) ───
-
-class PasswordTextField extends StatefulWidget {
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-  final ValueChanged<String>? onChanged;
-
-  const PasswordTextField({
-    super.key,
-    this.label = 'Password',
-    this.hint = 'Enter your password',
-    required this.controller,
-    this.onChanged,
-  });
-
-  @override
-  State<PasswordTextField> createState() => _PasswordTextFieldState();
-}
-
-class _PasswordTextFieldState extends State<PasswordTextField> {
-  bool _obscured = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppTextField(
-      label: widget.label,
-      hint: widget.hint,
-      controller: widget.controller,
-      obscureText: _obscured,
-      onChanged: widget.onChanged,
-      suffixIcon: IconButton(
-        icon: SvgPicture.asset(
-          _obscured ? 'assets/icons/visibility_off.svg' : 'assets/icons/visibility_on.svg',
-          width: 22,
-          height: 22,
-        ),
-        onPressed: () {
-          setState(() {
-            _obscured = !_obscured;
-          });
-        },
-      ),
-    );
-  }
-}
-
 // ─── Phone Number TextField (state durumlu, ülke kodlu) ───
 
 enum PhoneFieldState { inactive, active, error }

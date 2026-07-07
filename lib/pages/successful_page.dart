@@ -148,9 +148,12 @@ class SuccessfulPage extends StatelessWidget {
         height: r.h(54),
         child: ElevatedButton(
           onPressed: () {
+            // Yeni oluşturulan randevu admin onaylayana kadar 'waiting'
+            // statüsünde durur (bkz. booking_service.dart addBooking), bu
+            // yüzden Upcoming değil Waiting sekmesine yönlendiriyoruz.
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const BookingsPage(initialTab: 1)),
+              MaterialPageRoute(builder: (_) => const BookingsPage(initialTab: 2)),
             );
           },
           style: ElevatedButton.styleFrom(
