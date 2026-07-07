@@ -2,6 +2,7 @@ import { db } from "./shared/firebase.js?v=2";
 import { requireProfessionalLogin, professionalLogout } from "./shared/auth.js?v=4";
 import { effectiveStatus } from "./shared/bookingStatus.js?v=2";
 import { notifyBookingStatusChange } from "./shared/notifications.js?v=1";
+import { PAGE_SIZE, renderPagination } from "./shared/pagination.js?v=2";
 import {
   doc,
   updateDoc,
@@ -47,21 +48,29 @@ const STATUS_LABELS = {
 
 const upcomingBodyEl = document.getElementById("upcoming-body");
 const pastBodyEl = document.getElementById("past-body");
+const upcomingPaginationEl = document.getElementById("upcoming-pagination");
+const pastPaginationEl = document.getElementById("past-pagination");
 
 let allUsers = [];
+let allUpcoming = [];
+let allPast = [];
+let upcomingPage = 1;
+let pastPage = 1;
 
 function customerLabel(userId) {
   const user = allUsers.find((u) => u.id === userId);
   return user?.fullName ?? "Bilinmeyen müşteri";
 }
 
-function renderPastRows(bodyEl, bookings) {
-  bodyEl.innerHTML = "";
-  if (bookings.length === 0) {
-    bodyEl.innerHTML = `<tr><td colspan="6" class="status">Kayıt yok.</td></tr>`;
+function renderPastRows() {
+  pastBodyEl.innerHTML = "";
+  if (allPast.length === 0) {
+    pastBodyEl.innerHTML = `<tr><td colspan="6" class="status">Kayıt yok.</td></tr>`;
+    pastPaginationEl.innerHTML = "";
     return;
   }
-  bookings.forEach((booking) => {
+  const start = (pastPage - 1) * PAGE_SIZE;
+  allPast.slice(start, start + PAGE_SIZE).forEach((booking) => {
     const row = document.createElement("tr");
     const statusLabel = STATUS_LABELS[booking.status] ?? booking.status ?? "";
     row.innerHTML = `
@@ -72,20 +81,27 @@ function renderPastRows(bodyEl, bookings) {
       <td>${booking.price ?? ""}</td>
       <td><span class="status-badge ${booking.status ?? ""}">${statusLabel}</span></td>
     `;
-    bodyEl.appendChild(row);
+    pastBodyEl.appendChild(row);
+  });
+
+  renderPagination(pastPaginationEl, pastPage, allPast.length, PAGE_SIZE, (newPage) => {
+    pastPage = newPage;
+    renderPastRows();
   });
 }
 
 // Uzman sadece kendi randevusunu "Geçmiş Yap" veya "İptal Et" olarak
 // işaretleyebilir; onaylama/gelmedi gibi diğer aksiyonlar admin'e özel kalır
 // (bkz. admin_web/kullanici-detay.js'teki tam aksiyon seti).
-function renderUpcomingRows(bodyEl, bookings) {
-  bodyEl.innerHTML = "";
-  if (bookings.length === 0) {
-    bodyEl.innerHTML = `<tr><td colspan="7" class="status">Kayıt yok.</td></tr>`;
+function renderUpcomingRows() {
+  upcomingBodyEl.innerHTML = "";
+  if (allUpcoming.length === 0) {
+    upcomingBodyEl.innerHTML = `<tr><td colspan="7" class="status">Kayıt yok.</td></tr>`;
+    upcomingPaginationEl.innerHTML = "";
     return;
   }
-  bookings.forEach((booking) => {
+  const start = (upcomingPage - 1) * PAGE_SIZE;
+  allUpcoming.slice(start, start + PAGE_SIZE).forEach((booking) => {
     const row = document.createElement("tr");
     const displayStatus = effectiveStatus(booking);
     const statusLabel = STATUS_LABELS[displayStatus] ?? displayStatus ?? "";
@@ -105,7 +121,12 @@ function renderUpcomingRows(bodyEl, bookings) {
     row.querySelector(".past-btn").addEventListener("click", () => updateBookingStatus(booking.id, "past"));
     row.querySelector(".cancel-btn").addEventListener("click", () => updateBookingStatus(booking.id, "cancelled"));
 
-    bodyEl.appendChild(row);
+    upcomingBodyEl.appendChild(row);
+  });
+
+  renderPagination(upcomingPaginationEl, upcomingPage, allUpcoming.length, PAGE_SIZE, (newPage) => {
+    upcomingPage = newPage;
+    renderUpcomingRows();
   });
 }
 
@@ -133,16 +154,18 @@ async function loadBookings() {
   );
   const bookings = bookingsSnap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
 
-  const upcoming = bookings
+  allUpcoming = bookings
     .filter((b) => b.status === "waiting" || b.status === "upcoming")
     .sort((a, b) => (a.dateIso ?? "").localeCompare(b.dateIso ?? ""));
 
-  const past = bookings
+  allPast = bookings
     .filter((b) => b.status === "past" || b.status === "cancelled" || b.status === "no-show")
     .sort((a, b) => (b.dateIso ?? "").localeCompare(a.dateIso ?? ""));
 
-  renderUpcomingRows(upcomingBodyEl, upcoming);
-  renderPastRows(pastBodyEl, past);
+  upcomingPage = 1;
+  pastPage = 1;
+  renderUpcomingRows();
+  renderPastRows();
 }
 
 // --- İzin Talebi: admin_web/uzmanlar.html'deki "İzin Talepleri" bölümünde
@@ -166,14 +189,17 @@ const leaveDateEl = document.getElementById("leave-date");
 const leaveReasonEl = document.getElementById("leave-reason");
 const leaveFormStatusEl = document.getElementById("leave-form-status");
 const leaveRequestsBodyEl = document.getElementById("leave-requests-body");
+const leaveRequestsPaginationEl = document.getElementById("leave-requests-pagination");
 
-function renderLeaveRequests(requests) {
+function renderLeaveRequests() {
   leaveRequestsBodyEl.innerHTML = "";
-  if (requests.length === 0) {
+  if (myLeaveRequests.length === 0) {
     leaveRequestsBodyEl.innerHTML = `<tr><td colspan="3" class="status">Henüz izin talebin yok.</td></tr>`;
+    leaveRequestsPaginationEl.innerHTML = "";
     return;
   }
-  requests.forEach((request) => {
+  const start = (leaveRequestsPage - 1) * PAGE_SIZE;
+  myLeaveRequests.slice(start, start + PAGE_SIZE).forEach((request) => {
     const row = document.createElement("tr");
     const badgeClass = LEAVE_STATUS_BADGE_CLASS[request.status] ?? "";
     const label = LEAVE_STATUS_LABELS[request.status] ?? request.status ?? "";
@@ -184,9 +210,15 @@ function renderLeaveRequests(requests) {
     `;
     leaveRequestsBodyEl.appendChild(row);
   });
+
+  renderPagination(leaveRequestsPaginationEl, leaveRequestsPage, myLeaveRequests.length, PAGE_SIZE, (newPage) => {
+    leaveRequestsPage = newPage;
+    renderLeaveRequests();
+  });
 }
 
 let myLeaveRequests = [];
+let leaveRequestsPage = 1;
 
 async function loadLeaveRequests() {
   if (!professional) return;
@@ -196,7 +228,8 @@ async function loadLeaveRequests() {
   myLeaveRequests = snapshot.docs
     .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
     .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
-  renderLeaveRequests(myLeaveRequests);
+  leaveRequestsPage = 1;
+  renderLeaveRequests();
 }
 
 leaveFormEl.addEventListener("submit", async (e) => {
